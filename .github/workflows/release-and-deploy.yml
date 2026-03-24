@@ -2,8 +2,8 @@ name: Release And Deploy
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       release_tag:
@@ -22,21 +22,35 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
-    env:
-      RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Create Tag For Manual Run
-        if: github.event_name == 'workflow_dispatch'
+      - name: Resolve Release Tag
+        id: vars
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            release_tag="${{ inputs.release_tag }}"
+          else
+            version="$(sed -n 's:.*<Version>\\(.*\\)</Version>.*:\\1:p' workspace/research/E5Renewer.Net/Directory.Build.props | head -n 1)"
+            if [[ -z "${version}" ]]; then
+              echo "Failed to resolve version from Directory.Build.props" >&2
+              exit 1
+            fi
+
+            release_tag="v${version#v}"
+          fi
+
+          echo "release_tag=${release_tag}" >> "${GITHUB_OUTPUT}"
+
+      - name: Create Or Update Release Tag
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f "${RELEASE_TAG}" "${GITHUB_SHA}"
-          git push origin "refs/tags/${RELEASE_TAG}" --force
+          git tag -f "${{ steps.vars.outputs.release_tag }}" "${GITHUB_SHA}"
+          git push origin "refs/tags/${{ steps.vars.outputs.release_tag }}" --force
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -52,22 +66,22 @@ jobs:
       - name: Archive Publish Bundle
         run: |
           mkdir -p workspace/build/artifacts
-          tar -C workspace/build/publish -czf "workspace/build/artifacts/Microsoft365_E5_Renew_X-${RELEASE_TAG}.tar.gz" .
+          tar -C workspace/build/publish -czf "workspace/build/artifacts/Microsoft365_E5_Renew_X-${{ steps.vars.outputs.release_tag }}.tar.gz" .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.RELEASE_TAG }}
+          tag_name: ${{ steps.vars.outputs.release_tag }}
           generate_release_notes: true
           files: |
-            workspace/build/artifacts/Microsoft365_E5_Renew_X-${{ env.RELEASE_TAG }}.tar.gz
+            workspace/build/artifacts/Microsoft365_E5_Renew_X-${{ steps.vars.outputs.release_tag }}.tar.gz
 
       - name: Sync Hugging Face Space
         if: github.event_name == 'push' || inputs.deploy_hf
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
-          HF_COMMIT_MESSAGE: Deploy ${{ env.RELEASE_TAG }} from GitHub Actions
+          HF_COMMIT_MESSAGE: Deploy ${{ steps.vars.outputs.release_tag }} from GitHub Actions
         run: |
           if [[ -z "${HF_TOKEN:-}" || -z "${HF_SPACE_ID:-}" ]]; then
             echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping HF deployment."
