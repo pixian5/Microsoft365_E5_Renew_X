@@ -50,7 +50,7 @@ public readonly struct User
             ImmutableList<DayOfWeek> days = this.days ?? ImmutableList.Create(
                 DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday);
 
-            DateTime now = DateTime.Now;
+            DateTime now = RuntimeTimeZoneContext.GetNow();
             DateOnly today = DateOnly.FromDateTime(now);
             DateTime fromDateTime = new(today, fromTime);
             DateTime toDateTime = new(today, toTime);

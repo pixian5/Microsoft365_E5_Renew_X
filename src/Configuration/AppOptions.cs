@@ -11,7 +11,31 @@ public sealed class AppOptions
         var options = configuration.Get<AppOptions>() ?? new AppOptions();
         options.Runtime.UserSecretFile = NormalizeFile(options.Runtime.UserSecretPath, contentRoot, "Deploy/user-secret.json");
         options.Runtime.TokenFile = NormalizeNullableFile(options.Runtime.TokenFilePath, contentRoot);
+        options.Runtime.TimeZone = ResolveTimeZone(options.Runtime.TimeZoneId);
         return options;
+    }
+
+    private static TimeZoneInfo ResolveTimeZone(string? configuredTimeZoneId)
+    {
+        string[] candidates = string.IsNullOrWhiteSpace(configuredTimeZoneId)
+            ? ["Asia/Shanghai", "China Standard Time"]
+            : [configuredTimeZoneId, "Asia/Shanghai", "China Standard Time"];
+
+        foreach (string candidate in candidates.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById(candidate);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+            }
+            catch (InvalidTimeZoneException)
+            {
+            }
+        }
+
+        return TimeZoneInfo.Local;
     }
 
     private static FileInfo NormalizeFile(string? path, string contentRoot, string fallback)
@@ -41,8 +65,10 @@ public sealed class RuntimeOptions
     public uint AllowedMaxAgeSeconds { get; init; } = 30;
     public string UserSecretPath { get; init; } = "Deploy/user-secret.json";
     public string? TokenFilePath { get; init; } = "Deploy/token.txt";
+    public string TimeZoneId { get; init; } = "Asia/Shanghai";
     public FileInfo UserSecretFile { get; set; } = new("Deploy/user-secret.json");
     public FileInfo? TokenFile { get; set; } = new("Deploy/token.txt");
+    public TimeZoneInfo TimeZone { get; set; } = TimeZoneInfo.Local;
 }
 
 public sealed class LegacySiteOptions

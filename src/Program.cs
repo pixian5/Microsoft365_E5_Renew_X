@@ -18,6 +18,7 @@ builder.Configuration
     .AddEnvironmentVariables();
 
 var options = AppOptions.Bind(builder.Configuration, builder.Environment.ContentRootPath);
+RuntimeTimeZoneContext.Set(options.Runtime.TimeZone);
 SystemConfig.Initialize(options, builder.Environment.ContentRootPath);
 
 KestrelEndpointConfigurator.Configure(builder.WebHost, options);
