@@ -45,7 +45,9 @@ public sealed class ManagedGlobalSettings
 
     public List<int>? Days { get; set; }
 
-    public int ApiCallIntervalSeconds { get; set; } = 1;
+    public int ApiCallIntervalMinSeconds { get; set; } = 1;
+
+    public int ApiCallIntervalMaxSeconds { get; set; } = 1;
 
     public int FrontendRefreshSeconds { get; set; } = 5;
 }

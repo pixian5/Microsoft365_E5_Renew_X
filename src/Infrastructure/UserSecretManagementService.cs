@@ -100,12 +100,21 @@ public sealed class UserSecretManagementService
 
         if (document.Settings is not null)
         {
+            int apiCallIntervalMinSeconds = Math.Clamp(document.Settings.ApiCallIntervalMinSeconds, 1, 3600);
+            int apiCallIntervalMaxSeconds = Math.Clamp(document.Settings.ApiCallIntervalMaxSeconds, 1, 3600);
+            if (apiCallIntervalMaxSeconds < apiCallIntervalMinSeconds)
+            {
+                (apiCallIntervalMinSeconds, apiCallIntervalMaxSeconds) = (apiCallIntervalMaxSeconds, apiCallIntervalMinSeconds);
+            }
+
             document.Settings = new ManagedGlobalSettings
             {
                 FromTime = NormalizeTime(document.Settings.FromTime, isEndTime: false),
                 ToTime = NormalizeTime(document.Settings.ToTime, isEndTime: true),
                 Days = document.Settings.Days?.Distinct().Order().ToList(),
-                ApiCallIntervalSeconds = Math.Clamp(document.Settings.ApiCallIntervalSeconds, 1, 3600)
+                ApiCallIntervalMinSeconds = apiCallIntervalMinSeconds,
+                ApiCallIntervalMaxSeconds = apiCallIntervalMaxSeconds,
+                FrontendRefreshSeconds = Math.Clamp(document.Settings.FrontendRefreshSeconds, 1, 3600)
             };
         }
 

@@ -124,9 +124,24 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
     {
         if (user.timeToStart == TimeSpan.Zero)
         {
-            int seconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalSeconds") ?? 1;
-            int milliseconds = Math.Clamp(seconds, 1, 3600) * 1000;
-            this.logger.LogDebug("{0} is going to sleep for {1} millisecond(s)", user.name, milliseconds);
+            int? legacySeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalSeconds");
+            int minSeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalMinSeconds")
+                ?? legacySeconds
+                ?? 1;
+            int maxSeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalMaxSeconds")
+                ?? legacySeconds
+                ?? minSeconds;
+
+            minSeconds = Math.Clamp(minSeconds, 1, 3600);
+            maxSeconds = Math.Clamp(maxSeconds, 1, 3600);
+            if (maxSeconds < minSeconds)
+            {
+                (minSeconds, maxSeconds) = (maxSeconds, minSeconds);
+            }
+
+            int seconds = Random.Shared.Next(minSeconds, maxSeconds + 1);
+            int milliseconds = seconds * 1000;
+            this.logger.LogDebug("{0} is going to sleep for {1} millisecond(s) (range: {2}-{3} second(s))", user.name, milliseconds, minSeconds, maxSeconds);
             await Task.Delay(milliseconds, token);
         }
     }

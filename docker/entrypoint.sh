@@ -12,7 +12,7 @@ elif [ -n "${USER_SECRET_JSON:-}" ]; then
   printf '%s' "$USER_SECRET_JSON" > "$DEPLOY_DIR/user-secret.json"
 elif [ ! -f "$DEPLOY_DIR/user-secret.json" ]; then
   cat > "$DEPLOY_DIR/user-secret.json" <<'EOF'
-{"users":[],"settings":{"from_time":"08:00:00","to_time":"23:59:59","days":[0,1,2,3,4,5,6],"api_call_interval_seconds":1,"frontend_refresh_seconds":5}}
+{"users":[],"settings":{"from_time":"08:00:00","to_time":"23:59:59","days":[0,1,2,3,4,5,6],"api_call_interval_min_seconds":1,"api_call_interval_max_seconds":1,"frontend_refresh_seconds":5}}
 EOF
 fi
 

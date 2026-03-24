@@ -7,7 +7,8 @@ namespace Microsoft365_E5_Renew_X.Infrastructure;
 
 public sealed class DashboardSettingsService
 {
-    private const int DefaultApiCallIntervalSeconds = 1;
+    private const int DefaultApiCallIntervalMinSeconds = 1;
+    private const int DefaultApiCallIntervalMaxSeconds = 1;
     private const int DefaultFrontendRefreshSeconds = 5;
 
     private readonly FileInfo appSettingsFile;
@@ -18,15 +19,30 @@ public sealed class DashboardSettingsService
         this.appSettingsFile = new FileInfo(Path.Combine(environment.ContentRootPath, "appsettings.json"));
     }
 
-    public async Task<int> GetApiCallIntervalSecondsAsync(CancellationToken cancellationToken = default)
+    public async Task<(int MinSeconds, int MaxSeconds)> GetApiCallIntervalSecondsRangeAsync(CancellationToken cancellationToken = default)
     {
         await this.gate.WaitAsync(cancellationToken);
         try
         {
             JsonObject root = await ReadRootAsync(cancellationToken);
             JsonObject runtime = root["Runtime"] as JsonObject ?? new JsonObject();
-            int? value = runtime["GraphApiIntervalSeconds"]?.GetValue<int>();
-            return value is >= 1 and <= 3600 ? value.Value : DefaultApiCallIntervalSeconds;
+            int? minValue = runtime["GraphApiIntervalMinSeconds"]?.GetValue<int>();
+            int? maxValue = runtime["GraphApiIntervalMaxSeconds"]?.GetValue<int>();
+            int? legacyValue = runtime["GraphApiIntervalSeconds"]?.GetValue<int>();
+
+            int minSeconds = minValue is >= 1 and <= 3600
+                ? minValue.Value
+                : legacyValue is >= 1 and <= 3600 ? legacyValue.Value : DefaultApiCallIntervalMinSeconds;
+            int maxSeconds = maxValue is >= 1 and <= 3600
+                ? maxValue.Value
+                : legacyValue is >= 1 and <= 3600 ? legacyValue.Value : DefaultApiCallIntervalMaxSeconds;
+
+            if (maxSeconds < minSeconds)
+            {
+                (minSeconds, maxSeconds) = (maxSeconds, minSeconds);
+            }
+
+            return (minSeconds, maxSeconds);
         }
         finally
         {
@@ -34,16 +50,23 @@ public sealed class DashboardSettingsService
         }
     }
 
-    public async Task<int> SaveApiCallIntervalSecondsAsync(int seconds, CancellationToken cancellationToken = default)
+    public async Task<(int MinSeconds, int MaxSeconds)> SaveApiCallIntervalSecondsRangeAsync(int minSeconds, int maxSeconds, CancellationToken cancellationToken = default)
     {
-        int normalized = Math.Clamp(seconds, 1, 3600);
+        int normalizedMin = Math.Clamp(minSeconds, 1, 3600);
+        int normalizedMax = Math.Clamp(maxSeconds, 1, 3600);
+        if (normalizedMax < normalizedMin)
+        {
+            (normalizedMin, normalizedMax) = (normalizedMax, normalizedMin);
+        }
 
         await this.gate.WaitAsync(cancellationToken);
         try
         {
             JsonObject root = await ReadRootAsync(cancellationToken);
             JsonObject runtime = root["Runtime"] as JsonObject ?? new JsonObject();
-            runtime["GraphApiIntervalSeconds"] = normalized;
+            runtime["GraphApiIntervalMinSeconds"] = normalizedMin;
+            runtime["GraphApiIntervalMaxSeconds"] = normalizedMax;
+            runtime.Remove("GraphApiIntervalSeconds");
             root["Runtime"] = runtime;
 
             EnsureDirectory();
@@ -52,7 +75,7 @@ public sealed class DashboardSettingsService
                 root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }),
                 cancellationToken);
 
-            return normalized;
+            return (normalizedMin, normalizedMax);
         }
         finally
         {

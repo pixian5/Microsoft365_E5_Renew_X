@@ -17,7 +17,7 @@ rm -rf \
   "$ROOT/bin/Release/net10.0/archive" \
   "$ROOT/bin/Release/net10.0/recovered-src" \
   "$ROOT/bin/Release/net10.0/research" \
-  "$ROOT/bin/Release/net10.0/workspace"
+  "$ROOT/bin/Release/net10.0/workspace" || true
 find "$ROOT/bin/Release/net10.0" -name .DS_Store -delete
 
 # Strip debug symbols and XML docs from the runnable output to keep local builds lean.

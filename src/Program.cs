@@ -190,9 +190,11 @@ app.MapGet("/dashboard/settings", async (
     CancellationToken cancellationToken) =>
 {
     var document = await service.ReadAsync(cancellationToken);
+    var apiCallIntervalRange = await dashboardSettingsService.GetApiCallIntervalSecondsRangeAsync(cancellationToken);
     var settings = BuildSettingsResponse(
         document,
-        await dashboardSettingsService.GetApiCallIntervalSecondsAsync(cancellationToken),
+        apiCallIntervalRange.MinSeconds,
+        apiCallIntervalRange.MaxSeconds,
         await dashboardSettingsService.GetFrontendRefreshSecondsAsync(cancellationToken));
     return Results.Json(settings);
 });
@@ -216,13 +218,16 @@ app.MapPost("/dashboard/settings", async (
         .ToList();
 
     var savedDocument = await service.SaveAsync(document, cancellationToken);
-    int interval = await dashboardSettingsService.SaveApiCallIntervalSecondsAsync(normalizedSettings.ApiCallIntervalSeconds, cancellationToken);
+    var intervalRange = await dashboardSettingsService.SaveApiCallIntervalSecondsRangeAsync(
+        normalizedSettings.ApiCallIntervalMinSeconds,
+        normalizedSettings.ApiCallIntervalMaxSeconds,
+        cancellationToken);
     int frontendRefreshSeconds = await dashboardSettingsService.SaveFrontendRefreshSecondsAsync(normalizedSettings.FrontendRefreshSeconds, cancellationToken);
-    var settings = BuildSettingsResponse(savedDocument, interval, frontendRefreshSeconds);
+    var settings = BuildSettingsResponse(savedDocument, intervalRange.MinSeconds, intervalRange.MaxSeconds, frontendRefreshSeconds);
 
     return Results.Json(new
     {
-        message = "统一设置已保存。运行时间与星期已应用到全部账号；接口间隔与前端自动刷新时间已写入 appsettings.json。",
+        message = "统一设置已保存。运行时间与星期已应用到全部账号；接口等待区间与前端自动刷新时间已写入 appsettings.json。",
         restart_required = true,
         settings
     });
@@ -719,7 +724,7 @@ static string RenderHome(AppOptions options)
       <div class="modal-head">
         <div>
           <h2>统一设置</h2>
-          <div class="hint">这里可以一次设置所有账号的运行时间、运行星期、接口调用等待间隔，以及账户列表/运行状态/历史详情的自动刷新时间。</div>
+          <div class="hint">这里可以一次设置所有账号的运行时间、运行星期、接口调用后的随机等待区间，以及账户列表/运行状态/历史详情的自动刷新时间。</div>
         </div>
         <button class="close-btn" type="button" id="closeSettingsModalBtn" aria-label="关闭">×</button>
       </div>
@@ -732,9 +737,14 @@ static string RenderHome(AppOptions options)
             <input id="settings_to_time" placeholder="23:00:00 或 23">
           </label>
         </div>
-        <label>每次调用完一个接口后的等待秒数
-          <input id="settings_api_interval_seconds" type="number" min="1" max="3600" step="1" placeholder="1">
-        </label>
+        <div class="form-grid">
+          <label>每次调用完一个接口后的最小等待秒数
+            <input id="settings_api_interval_min_seconds" type="number" min="1" max="3600" step="1" placeholder="1">
+          </label>
+          <label>每次调用完一个接口后的最大等待秒数
+            <input id="settings_api_interval_max_seconds" type="number" min="1" max="3600" step="1" placeholder="1">
+          </label>
+        </div>
         <label>账户列表、运行状态、历史详情自动刷新秒数
           <input id="settings_frontend_refresh_seconds" type="number" min="1" max="3600" step="1" placeholder="5">
         </label>
@@ -1241,7 +1251,8 @@ static string RenderHome(AppOptions options)
     function resetSettingsForm() {
       document.getElementById('settings_from_time').value = '08:00:00';
       document.getElementById('settings_to_time').value = '16:00:00';
-      document.getElementById('settings_api_interval_seconds').value = '1';
+      document.getElementById('settings_api_interval_min_seconds').value = '1';
+      document.getElementById('settings_api_interval_max_seconds').value = '1';
       document.getElementById('settings_frontend_refresh_seconds').value = '5';
       settingsDayInputs.forEach(input => input.checked = ['1', '2', '3', '4', '5'].includes(input.value));
     }
@@ -1250,7 +1261,10 @@ static string RenderHome(AppOptions options)
       const source = settings || {};
       document.getElementById('settings_from_time').value = source.from_time || '08:00:00';
       document.getElementById('settings_to_time').value = source.to_time || '16:00:00';
-      document.getElementById('settings_api_interval_seconds').value = String(Number(source.api_call_interval_seconds || 1));
+      const minSeconds = Number(source.api_call_interval_min_seconds || source.api_call_interval_seconds || 1);
+      const maxSeconds = Number(source.api_call_interval_max_seconds || source.api_call_interval_seconds || minSeconds || 1);
+      document.getElementById('settings_api_interval_min_seconds').value = String(minSeconds);
+      document.getElementById('settings_api_interval_max_seconds').value = String(maxSeconds);
       document.getElementById('settings_frontend_refresh_seconds').value = String(Number(source.frontend_refresh_seconds || 5));
       const selectedDays = new Set(Array.isArray(source.days) && source.days.length ? source.days.map(String) : ['1', '2', '3', '4', '5']);
       settingsDayInputs.forEach(input => input.checked = selectedDays.has(input.value));
@@ -1258,11 +1272,14 @@ static string RenderHome(AppOptions options)
 
     function collectSettingsForm() {
       const days = settingsDayInputs.filter(input => input.checked).map(input => Number(input.value));
+      const minSeconds = Math.max(1, Number(document.getElementById('settings_api_interval_min_seconds').value || '1'));
+      const maxSeconds = Math.max(1, Number(document.getElementById('settings_api_interval_max_seconds').value || String(minSeconds)));
       return {
         from_time: normalizeNullable(document.getElementById('settings_from_time').value),
         to_time: normalizeNullable(document.getElementById('settings_to_time').value),
         days: days.length ? days : [1, 2, 3, 4, 5],
-        api_call_interval_seconds: Math.max(1, Number(document.getElementById('settings_api_interval_seconds').value || '1')),
+        api_call_interval_min_seconds: Math.min(minSeconds, maxSeconds),
+        api_call_interval_max_seconds: Math.max(minSeconds, maxSeconds),
         frontend_refresh_seconds: Math.max(1, Number(document.getElementById('settings_frontend_refresh_seconds').value || '5'))
       };
     }
@@ -1305,10 +1322,11 @@ static string RenderHome(AppOptions options)
     return html;
 }
 
-static ManagedGlobalSettings BuildSettingsResponse(ManagedUserSecretDocument document, int apiCallIntervalSeconds, int frontendRefreshSeconds)
+static ManagedGlobalSettings BuildSettingsResponse(ManagedUserSecretDocument document, int apiCallIntervalMinSeconds, int apiCallIntervalMaxSeconds, int frontendRefreshSeconds)
 {
     ManagedGlobalSettings settings = document.Settings ?? DeriveSettingsFromUsers(document.Users);
-    settings.ApiCallIntervalSeconds = Math.Clamp(apiCallIntervalSeconds, 1, 3600);
+    settings.ApiCallIntervalMinSeconds = Math.Clamp(apiCallIntervalMinSeconds, 1, 3600);
+    settings.ApiCallIntervalMaxSeconds = Math.Clamp(apiCallIntervalMaxSeconds, 1, 3600);
     settings.FrontendRefreshSeconds = Math.Clamp(frontendRefreshSeconds, 1, 3600);
     return NormalizeGlobalSettings(settings);
 }
@@ -1321,19 +1339,28 @@ static ManagedGlobalSettings DeriveSettingsFromUsers(IReadOnlyList<ManagedUserSe
         FromTime = firstUser?.FromTime ?? "08:00:00",
         ToTime = firstUser?.ToTime ?? "16:00:00",
         Days = firstUser?.Days is { Count: > 0 } ? [.. firstUser.Days] : [1, 2, 3, 4, 5],
-        ApiCallIntervalSeconds = 1,
+        ApiCallIntervalMinSeconds = 1,
+        ApiCallIntervalMaxSeconds = 1,
         FrontendRefreshSeconds = 5
     };
 }
 
 static ManagedGlobalSettings NormalizeGlobalSettings(ManagedGlobalSettings settings)
 {
+    int apiCallIntervalMinSeconds = Math.Clamp(settings.ApiCallIntervalMinSeconds, 1, 3600);
+    int apiCallIntervalMaxSeconds = Math.Clamp(settings.ApiCallIntervalMaxSeconds, 1, 3600);
+    if (apiCallIntervalMaxSeconds < apiCallIntervalMinSeconds)
+    {
+        (apiCallIntervalMinSeconds, apiCallIntervalMaxSeconds) = (apiCallIntervalMaxSeconds, apiCallIntervalMinSeconds);
+    }
+
     return new ManagedGlobalSettings
     {
         FromTime = NormalizeDashboardTime(settings.FromTime, false) ?? "08:00:00",
         ToTime = NormalizeDashboardTime(settings.ToTime, true) ?? "16:00:00",
         Days = settings.Days?.Distinct().Order().ToList() is { Count: > 0 } days ? days : [1, 2, 3, 4, 5],
-        ApiCallIntervalSeconds = Math.Clamp(settings.ApiCallIntervalSeconds, 1, 3600),
+        ApiCallIntervalMinSeconds = apiCallIntervalMinSeconds,
+        ApiCallIntervalMaxSeconds = apiCallIntervalMaxSeconds,
         FrontendRefreshSeconds = Math.Clamp(settings.FrontendRefreshSeconds, 1, 3600)
     };
 }
