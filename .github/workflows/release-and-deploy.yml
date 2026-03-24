@@ -34,7 +34,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             release_tag="${{ inputs.release_tag }}"
           else
-            version="$(sed -n 's:.*<Version>\\(.*\\)</Version>.*:\\1:p' workspace/research/E5Renewer.Net/Directory.Build.props | head -n 1)"
+            version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' workspace/research/E5Renewer.Net/Directory.Build.props | head -n 1)"
             if [[ -z "${version}" ]]; then
               echo "Failed to resolve version from Directory.Build.props" >&2
               exit 1
