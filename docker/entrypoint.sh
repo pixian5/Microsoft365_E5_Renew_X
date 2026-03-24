@@ -25,5 +25,19 @@ fi
 export PORT="${PORT:-7860}"
 export HOST="${HOST:-0.0.0.0}"
 export ASPNETCORE_URLS="${ASPNETCORE_URLS:-http://${HOST}:${PORT}}"
+export DOTNET_RUNNING_IN_CONTAINER="${DOTNET_RUNNING_IN_CONTAINER:-true}"
+RESTART_FLAG="$APP_ROOT/runtime/restart.requested"
 
-exec "$APP_ROOT/Microsoft365_E5_Renew_X"
+while true; do
+  rm -f "$RESTART_FLAG"
+  "$APP_ROOT/Microsoft365_E5_Renew_X"
+  exit_code=$?
+
+  if [ -f "$RESTART_FLAG" ]; then
+    rm -f "$RESTART_FLAG"
+    sleep 1
+    continue
+  fi
+
+  exit "$exit_code"
+done

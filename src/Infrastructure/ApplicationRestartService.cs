@@ -25,8 +25,14 @@ public sealed class ApplicationRestartService
 
     public RestartRequestResult Restart()
     {
-        string shellCommand = BuildRestartShellCommand();
         AppendRestartLog($"收到重启请求。processPath={Environment.ProcessPath}, cwd={this.environment.ContentRootPath}");
+
+        if (IsContainerRestartSupported())
+        {
+            return RequestSupervisorRestart();
+        }
+
+        string shellCommand = BuildRestartShellCommand();
 
         RestartRequestResult result = StartDetached(shellCommand);
         if (!result.Success)
@@ -45,11 +51,36 @@ public sealed class ApplicationRestartService
         return result;
     }
 
+    private RestartRequestResult RequestSupervisorRestart()
+    {
+        try
+        {
+            string restartSignalPath = GetRestartSignalPath();
+            Directory.CreateDirectory(Path.GetDirectoryName(restartSignalPath)!);
+            File.WriteAllText(restartSignalPath, DateTimeOffset.Now.ToString("O"), new UTF8Encoding(false));
+            AppendRestartLog($"已写入容器重启标记：{restartSignalPath}");
+
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(500);
+                this.applicationLifetime.StopApplication();
+            });
+
+            return RestartRequestResult.SuccessResult("supervisor-flag", "已提交给容器入口脚本重启。");
+        }
+        catch (Exception ex)
+        {
+            AppendRestartLog($"写入容器重启标记失败。{ex.GetType().Name}: {ex.Message}");
+            return RestartRequestResult.FailureResult("supervisor-flag", ex.Message);
+        }
+    }
+
     private string BuildRestartShellCommand()
     {
         string processPath = Environment.ProcessPath ?? "dotnet";
         string[] args = Environment.GetCommandLineArgs();
         string logPath = GetRestartLogPath();
+        string lsofCommand = ResolveLsofCommand();
         int listenPort = ResolvePrimaryPort();
 
         Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
@@ -65,23 +96,34 @@ public sealed class ApplicationRestartService
             Quote($"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] 新实例启动命令开始执行。\\n"),
             ">>",
             Quote(logPath),
-            "&&",
-            "while",
-            "/usr/sbin/lsof",
-            $"-nP -iTCP:{listenPort} -sTCP:LISTEN >/dev/null 2>&1",
-            ";",
-            "do",
-            "printf",
-            Quote($"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] 检测到端口 {listenPort} 仍被占用，等待旧实例退出。\\n"),
-            ">>",
-            Quote(logPath),
-            ";",
-            "sleep 0.2",
-            ";",
-            "done",
-            "&&",
-            "env"
         ];
+
+        if (!string.IsNullOrWhiteSpace(lsofCommand))
+        {
+            commandParts.AddRange(
+            [
+                "&&",
+                "while",
+                lsofCommand,
+                $"-nP -iTCP:{listenPort} -sTCP:LISTEN >/dev/null 2>&1",
+                ";",
+                "do",
+                "printf",
+                Quote($"[{DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss.fff zzz}] 检测到端口 {listenPort} 仍被占用，等待旧实例退出。\\n"),
+                ">>",
+                Quote(logPath),
+                ";",
+                "sleep 0.2",
+                ";",
+                "done",
+                "&&"
+            ]);
+        }
+
+        commandParts.AddRange(
+        [
+            "env"
+        ]);
 
         string? dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
         if (!string.IsNullOrWhiteSpace(dotnetRoot))
@@ -193,16 +235,17 @@ public sealed class ApplicationRestartService
 
     private RestartRequestResult StartWithNohup(string shellCommand)
     {
+        string shellPath = ResolveShellPath();
         var startInfo = new ProcessStartInfo
         {
-            FileName = "/bin/zsh",
+            FileName = shellPath,
             WorkingDirectory = this.environment.ContentRootPath,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true
         };
         startInfo.ArgumentList.Add("-lc");
-        startInfo.ArgumentList.Add($"nohup /bin/zsh -lc {Quote(shellCommand)} >/dev/null 2>&1 &!");
+        startInfo.ArgumentList.Add($"nohup {Quote(shellPath)} -lc {Quote(shellCommand)} >/dev/null 2>&1 &");
 
         return RunAndCapture(startInfo, "nohup");
     }
@@ -367,6 +410,9 @@ public sealed class ApplicationRestartService
     private string GetRestartLogPath() =>
         Path.Combine(this.environment.ContentRootPath, "runtime", "restart.log");
 
+    private string GetRestartSignalPath() =>
+        Path.Combine(this.environment.ContentRootPath, "runtime", "restart.requested");
+
     private string GetRestartPlistPath() =>
         Path.Combine(this.environment.ContentRootPath, "runtime", $"{RestartJobLabel}.plist");
 
@@ -390,6 +436,40 @@ public sealed class ApplicationRestartService
 
     private static string SafeText(string value) =>
         string.IsNullOrWhiteSpace(value) ? "<empty>" : value.Replace(Environment.NewLine, " | ");
+
+    private static bool IsContainerRestartSupported()
+    {
+        if (!string.Equals(Environment.GetEnvironmentVariable("DOTNET_RUNNING_IN_CONTAINER"), "true", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return File.Exists("/.dockerenv") || Directory.Exists("/app");
+    }
+
+    private static string ResolveShellPath()
+    {
+        string[] candidates =
+        [
+            "/bin/zsh",
+            "/bin/bash",
+            "/bin/sh"
+        ];
+
+        return candidates.FirstOrDefault(File.Exists) ?? "/bin/sh";
+    }
+
+    private static string ResolveLsofCommand()
+    {
+        string[] candidates =
+        [
+            "/usr/sbin/lsof",
+            "/usr/bin/lsof",
+            "/bin/lsof"
+        ];
+
+        return candidates.FirstOrDefault(File.Exists) ?? string.Empty;
+    }
 
     private static string EscapeXml(string value) =>
         value
