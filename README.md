@@ -139,7 +139,7 @@ cp Deploy/token.txt.example Deploy/token.txt
 - 清理历史构建里残留的无用目录
 - 删除 `.pdb`、`.xml` 和 `.DS_Store`
 
-### 4. 启动
+### 4. 前台启动
 
 ```bash
 ./workspace/scripts/run.sh
@@ -159,7 +159,86 @@ cp Deploy/token.txt.example Deploy/token.txt
 
 - [http://127.0.0.1:51066](http://127.0.0.1:51066)
 
-### 5. 验证
+### 5. 后台启动
+
+这个项目现在提供了适合实体机长期运行的后台脚本，默认会：
+
+- 把进程 PID 写入 `runtime/app.pid`
+- 把控制台输出写入 `runtime/history/console-时间戳.log`
+- 避免重复启动同一个后台实例
+
+macOS / Linux：
+
+```bash
+./workspace/scripts/start-background.sh
+./workspace/scripts/status.sh
+./workspace/scripts/stop-background.sh
+```
+
+Windows PowerShell：
+
+```powershell
+./workspace/scripts/start-background.ps1
+./workspace/scripts/status.ps1
+./workspace/scripts/stop-background.ps1
+```
+
+如果你运行的是 GitHub Release 解压后的发布目录，也可以直接用发布目录里的同名脚本：
+
+- `start-background.sh`
+- `stop-background.sh`
+- `status.sh`
+- `start-background.ps1`
+- `stop-background.ps1`
+- `status.ps1`
+
+### 6. 三平台实体机运行说明
+
+#### macOS
+
+1. 安装 `.NET 10 SDK` 或对应运行时。
+2. 构建：`./workspace/scripts/build.sh`
+3. 后台运行：`./workspace/scripts/start-background.sh`
+4. 查看状态：`./workspace/scripts/status.sh`
+5. 查看日志：`tail -f runtime/history/console-*.log`
+
+#### Linux
+
+1. 安装 `.NET 10 SDK` 或对应运行时。
+2. 构建：`./workspace/scripts/build.sh`
+3. 后台运行：`./workspace/scripts/start-background.sh`
+4. 查看状态：`./workspace/scripts/status.sh`
+5. 停止：`./workspace/scripts/stop-background.sh`
+
+如果是服务器场景，更推荐直接使用 GitHub Release 发布包，解压后运行发布目录中的后台脚本，而不是在服务器现编译源码。
+
+#### Windows
+
+1. 安装 `.NET 10 SDK` 或对应运行时。
+2. 用 PowerShell 进入仓库目录。
+3. 构建：
+
+```powershell
+dotnet clean .\Microsoft365_E5_Renew_X.csproj -c Release
+dotnet build .\Microsoft365_E5_Renew_X.csproj -c Release
+```
+
+4. 后台运行：
+
+```powershell
+./workspace/scripts/start-background.ps1
+```
+
+5. 查看状态或停止：
+
+```powershell
+./workspace/scripts/status.ps1
+./workspace/scripts/stop-background.ps1
+```
+
+默认日志目录同样是 `runtime/history/`。
+
+### 7. 验证
 
 浏览器打开首页后，应该能看到：
 

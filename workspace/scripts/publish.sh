@@ -37,6 +37,13 @@ if [[ -f "$ROOT/wwwroot/favicon.svg" ]]; then
   cp "$ROOT/wwwroot/favicon.svg" "$OUT_DIR/wwwroot/favicon.svg"
 fi
 
+cp "$ROOT/workspace/scripts/start-background.sh" "$OUT_DIR/start-background.sh"
+cp "$ROOT/workspace/scripts/stop-background.sh" "$OUT_DIR/stop-background.sh"
+cp "$ROOT/workspace/scripts/status.sh" "$OUT_DIR/status.sh"
+cp "$ROOT/workspace/scripts/start-background.ps1" "$OUT_DIR/start-background.ps1"
+cp "$ROOT/workspace/scripts/stop-background.ps1" "$OUT_DIR/stop-background.ps1"
+cp "$ROOT/workspace/scripts/status.ps1" "$OUT_DIR/status.ps1"
+
 cat > "$OUT_DIR/Microsoft365_E5_Renew_X" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -49,6 +56,7 @@ exec "$APP" "$@"
 EOF
 
 chmod +x "$OUT_DIR/Microsoft365_E5_Renew_X"
+chmod +x "$OUT_DIR/start-background.sh" "$OUT_DIR/stop-background.sh" "$OUT_DIR/status.sh"
 
 find "$OUT_DIR" -name .DS_Store -delete
 

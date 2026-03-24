@@ -1,10 +1,14 @@
-#!/bin/zsh
+#!/usr/bin/env bash
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-DOTNET_ROOT="${DOTNET_ROOT:-/Users/x/Tools/dotnet}"
-export DOTNET_ROOT
-export PATH="$DOTNET_ROOT:$PATH"
+
+if [[ -n "${DOTNET_ROOT:-}" ]]; then
+  export PATH="$DOTNET_ROOT:$PATH"
+elif [[ -d /Users/x/Tools/dotnet ]]; then
+  export DOTNET_ROOT=/Users/x/Tools/dotnet
+  export PATH="$DOTNET_ROOT:$PATH"
+fi
 
 dotnet clean "$ROOT/Microsoft365_E5_Renew_X.csproj" -c Release
 dotnet build "$ROOT/Microsoft365_E5_Renew_X.csproj" -c Release
