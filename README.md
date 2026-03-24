@@ -8,7 +8,7 @@ app_port: 7860
 
 Docker Space for the multi-account Microsoft 365 E5 renew dashboard.
 
-This Space ships a prebuilt publish bundle so Hugging Face only needs to start the container instead of compiling the full .NET solution during build.
+This Space downloads the prebuilt publish bundle from GitHub Releases during Docker build, so Hugging Face does not need to compile the full .NET solution and the Space repository stays lightweight.
 
 ## Required Space Secrets
 
@@ -22,4 +22,4 @@ The container writes these secrets into `Deploy/user-secret.json` and `Deploy/to
 - `HF_TOKEN`: Hugging Face write token used by GitHub Actions
 - `HF_SPACE_ID`: target Space id such as `xbzsb/microsoft365-e5-renew-x-next`
 
-The workflow in `.github/workflows/release-and-deploy.yml` builds the publish bundle, attaches it to a GitHub Release, and then syncs the same prebuilt bundle to the Hugging Face Space.
+The workflow in `.github/workflows/release-and-deploy.yml` builds the publish bundle, uploads it to a GitHub Release, and then syncs a lightweight Hugging Face Space that pulls the same bundle from that release during build.

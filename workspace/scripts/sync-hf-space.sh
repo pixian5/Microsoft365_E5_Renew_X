@@ -5,6 +5,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SPACE_DIR="$ROOT/workspace/build/hf-space"
 HF_SPACE_ID="${HF_SPACE_ID:?HF_SPACE_ID is required}"
 HF_TOKEN="${HF_TOKEN:?HF_TOKEN is required}"
+RELEASE_TAG="${RELEASE_TAG:-}"
 TMP_DIR="${TMPDIR:-/tmp}/hf-space-sync-$RANDOM"
 REMOTE_URL="https://oauth2:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_ID}"
 
@@ -26,7 +27,7 @@ git config user.email "${GIT_AUTHOR_EMAIL:-41898282+github-actions[bot]@users.no
 
 if [[ -n "$(git status --porcelain)" ]]; then
   git add .
-  git commit -m "${HF_COMMIT_MESSAGE:-Deploy prebuilt publish bundle}"
+  git commit -m "${HF_COMMIT_MESSAGE:-Deploy ${RELEASE_TAG:-prebuilt publish bundle}}"
   git push origin HEAD:main
 else
   printf 'HF Space already up to date.\n'
