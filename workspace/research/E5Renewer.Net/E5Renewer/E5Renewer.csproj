@@ -18,7 +18,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Admin\E5Renewer.Models.GraphAPIs.Admin.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.AgreementAcceptancesGet\E5Renewer.Models.GraphAPIs.AgreementAcceptancesGet.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Agreements\E5Renewer.Models.GraphAPIs.Agreements.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.AppCatalogs\E5Renewer.Models.GraphAPIs.AppCatalogs.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Applications\E5Renewer.Models.GraphAPIs.Applications.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.ApplicationTemplates\E5Renewer.Models.GraphAPIs.ApplicationTemplates.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.AuditLogs\E5Renewer.Models.GraphAPIs.AuditLogs.csproj" />
@@ -136,7 +135,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByAppVersionDetails\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByAppVersionDetails.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByAppVersionDeviceId.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByAppVersionDeviceId.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByAppVersionDeviceId\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByAppVersionDeviceId.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByOSVersion.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByOSVersion.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByOSVersion\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthApplicationPerformanceByOSVersion.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthDeviceModelPerformance.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthDeviceModelPerformance.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthDeviceModelPerformance\E5Renewer.Models.GraphAPIs.DeviceManagement.UserExperienceAnalyticsAppHealthDeviceModelPerformance.csproj" />
@@ -187,7 +185,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.UserSettings.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.UserSettings.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.UserSettings\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.UserSettings.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsAutopilotDeviceIdentities.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsAutopilotDeviceIdentities.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsAutopilotDeviceIdentities\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsAutopilotDeviceIdentities.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsMalwareInformation.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsMalwareInformation.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsMalwareInformation\E5Renewer.Models.GraphAPIs.DeviceManagement.WindowsMalwareInformation.csproj" />
@@ -195,7 +192,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Devices.Count\E5Renewer.Models.GraphAPIs.Devices.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Devices.Delta\E5Renewer.Models.GraphAPIs.Devices.Delta.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Devices\E5Renewer.Models.GraphAPIs.Devices.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Directory.AdministrativeUnits.Count\E5Renewer.Models.GraphAPIs.Directory.AdministrativeUnits.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Directory.AdministrativeUnits.Delta\E5Renewer.Models.GraphAPIs.Directory.AdministrativeUnits.Delta.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Directory.AdministrativeUnits\E5Renewer.Models.GraphAPIs.Directory.AdministrativeUnits.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Directory.AttributeSets.Count\E5Renewer.Models.GraphAPIs.Directory.AttributeSets.Count.csproj" />
@@ -318,7 +314,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.IdentityGovernance.AppConsent.AppConsentRequests.Count\E5Renewer.Models.GraphAPIs.IdentityGovernance.AppConsent.AppConsentRequests.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.IdentityGovernance.AppConsent.AppConsentRequests\E5Renewer.Models.GraphAPIs.IdentityGovernance.AppConsent.AppConsentRequests.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.IdentityGovernance.AppConsent\E5Renewer.Models.GraphAPIs.IdentityGovernance.AppConsent.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackageAssignmentApprovals.Count\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackageAssignmentApprovals.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackageAssignmentApprovals\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackageAssignmentApprovals.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackages.Count\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackages.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackages\E5Renewer.Models.GraphAPIs.IdentityGovernance.EntitlementManagement.AccessPackages.csproj" />
@@ -394,7 +389,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Places.GraphRoom\E5Renewer.Models.GraphAPIs.Places.GraphRoom.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Places.GraphRoomList.Count\E5Renewer.Models.GraphAPIs.Places.GraphRoomList.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Places.GraphRoomList\E5Renewer.Models.GraphAPIs.Places.GraphRoomList.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Buckets\E5Renewer.Models.GraphAPIs.Planner.Buckets.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Plans.Count\E5Renewer.Models.GraphAPIs.Planner.Plans.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Plans\E5Renewer.Models.GraphAPIs.Planner.Plans.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Tasks.Count\E5Renewer.Models.GraphAPIs.Planner.Tasks.Count.csproj" />
@@ -435,7 +429,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Policies.TokenLifetimePolicies.Count\E5Renewer.Models.GraphAPIs.Policies.TokenLifetimePolicies.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Policies.TokenLifetimePolicies\E5Renewer.Models.GraphAPIs.Policies.TokenLifetimePolicies.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Policies\E5Renewer.Models.GraphAPIs.Policies.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Print.Connectors.Count\E5Renewer.Models.GraphAPIs.Print.Connectors.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Print.Connectors\E5Renewer.Models.GraphAPIs.Print.Connectors.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Print.Operations.Count\E5Renewer.Models.GraphAPIs.Print.Operations.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Print.Operations\E5Renewer.Models.GraphAPIs.Print.Operations.csproj" />
