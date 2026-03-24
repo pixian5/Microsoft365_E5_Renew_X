@@ -174,7 +174,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.Count.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.GetSourceImages\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.GetSourceImages.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages.csproj" />
@@ -551,7 +550,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.TenantRelationships.DelegatedAdminCustomers\E5Renewer.Models.GraphAPIs.TenantRelationships.DelegatedAdminCustomers.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.TenantRelationships.DelegatedAdminRelationships.Count\E5Renewer.Models.GraphAPIs.TenantRelationships.DelegatedAdminRelationships.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.TenantRelationships.DelegatedAdminRelationships\E5Renewer.Models.GraphAPIs.TenantRelationships.DelegatedAdminRelationships.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization.JoinRequest\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization.JoinRequest.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization.Tenants.Count\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization.Tenants.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization.Tenants\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization.Tenants.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization\E5Renewer.Models.GraphAPIs.TenantRelationships.MultiTenantOrganization.csproj" />
