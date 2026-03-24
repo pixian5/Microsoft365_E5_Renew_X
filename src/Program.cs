@@ -763,6 +763,7 @@ static string RenderHome(AppOptions options)
         <div class="toolbar-right">
           <button class="ghost" type="button" id="resetSettingsBtn">恢复工作日默认</button>
           <button class="primary" type="submit">保存统一设置</button>
+          <button class="restart" type="submit" id="saveSettingsAndRestartBtn" data-submit-action="save-restart">保存统一设置并重启</button>
         </div>
       </form>
     </div>
@@ -1156,6 +1157,7 @@ static string RenderHome(AppOptions options)
 
     async function onSettingsSubmit(event) {
       event.preventDefault();
+      const submitAction = event.submitter?.dataset.submitAction || 'save';
       const payload = collectSettingsForm();
       try {
         const response = await fetch('/dashboard/settings', {
@@ -1172,8 +1174,14 @@ static string RenderHome(AppOptions options)
         applySettingsToForm(state.settings);
         updateAutoRefreshTimers(Number(state.settings.frontend_refresh_seconds || 5) * 1000);
         await loadAccounts(false);
-        showMessage(`${data.message} 如需让运行时间和星期立即影响后台调度，请重启服务。`, 'success');
         closeSettingsModal();
+        if (submitAction === 'save-restart') {
+          showMessage(`${data.message} 正在发起服务重启。`, 'success');
+          await restartService();
+          return;
+        }
+
+        showMessage(`${data.message} 如需让运行时间和星期立即影响后台调度，请重启服务。`, 'success');
       } catch (error) {
         showMessage(error.message || '保存统一设置失败', 'error');
       }
