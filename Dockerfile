@@ -13,7 +13,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates curl tar \
     && rm -rf /var/lib/apt/lists/* \
     && test -n "$RELEASE_BUNDLE_URL" \
-    && test "$RELEASE_BUNDLE_URL" != "__RELEASE_BUNDLE_URL__" \
+    && printf '%s' "$RELEASE_BUNDLE_URL" | grep -Eq '^https://.+' \
     && curl -fsSL "$RELEASE_BUNDLE_URL" -o /tmp/release.tar.gz \
     && tar -xzf /tmp/release.tar.gz -C /app \
     && rm -f /tmp/release.tar.gz \
