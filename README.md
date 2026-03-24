@@ -476,6 +476,26 @@ docker run --rm -p 7860:7860 \
 
 可选地也可以传 Base64 版本，由入口脚本自行解码。
 
+### 推荐的 Secret 托管方式
+
+如果你不希望把真实账号配置放在本地仓库或手工粘贴到 Hugging Face，可以直接把运行配置放到 GitHub Secrets，再由 GitHub Actions 自动同步到 HF Space。
+
+推荐在 GitHub 仓库里配置这些 Secrets：
+
+- `HF_TOKEN`
+- `HF_SPACE_ID`
+- `USER_SECRET_JSON` 或 `USER_SECRET_JSON_B64`
+- `TOKEN_TXT` 或 `TOKEN_TXT_B64`
+
+这样做之后：
+
+1. 真实的 `Tenant ID`、`Client ID`、`Client Secret` 只保存在 GitHub Secrets
+2. 工作流发布时会先调用 Hugging Face API 更新 Space Secrets
+3. 然后再同步 HF Space 仓库内容并触发部署
+4. 容器启动时由 `docker/entrypoint.sh` 自动写入 `/app/Deploy/user-secret.json` 和 `/app/Deploy/token.txt`
+
+也就是说，真实账户配置不会出现在源码仓库里，也不需要手工进 HF 页面重复维护。
+
 ## GitHub Actions 发布流程
 
 工作流文件：
@@ -500,6 +520,8 @@ GitHub Secrets：
 
 - `HF_TOKEN`
 - `HF_SPACE_ID`
+- `USER_SECRET_JSON` 或 `USER_SECRET_JSON_B64`
+- `TOKEN_TXT` 或 `TOKEN_TXT_B64`
 
 ## 构建与发布脚本
 

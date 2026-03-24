@@ -76,6 +76,58 @@ jobs:
           files: |
             workspace/build/artifacts/Microsoft365_E5_Renew_X-${{ steps.vars.outputs.release_tag }}.tar.gz
 
+      - name: Setup Python For Hugging Face
+        if: github.event_name == 'push' || inputs.deploy_hf
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Update Hugging Face Space Secrets
+        if: github.event_name == 'push' || inputs.deploy_hf
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
+          USER_SECRET_JSON: ${{ secrets.USER_SECRET_JSON }}
+          USER_SECRET_JSON_B64: ${{ secrets.USER_SECRET_JSON_B64 }}
+          TOKEN_TXT: ${{ secrets.TOKEN_TXT }}
+          TOKEN_TXT_B64: ${{ secrets.TOKEN_TXT_B64 }}
+        run: |
+          if [[ -z "${HF_TOKEN:-}" || -z "${HF_SPACE_ID:-}" ]]; then
+            echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping Space secrets sync."
+            exit 0
+          fi
+
+          python -m pip install --disable-pip-version-check --quiet "huggingface_hub>=0.30,<1"
+          python <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          token = os.environ.get("HF_TOKEN", "").strip()
+          repo_id = os.environ.get("HF_SPACE_ID", "").strip()
+          if not token or not repo_id:
+              raise SystemExit(0)
+
+          api = HfApi(token=token)
+          secret_names = [
+              "USER_SECRET_JSON",
+              "USER_SECRET_JSON_B64",
+              "TOKEN_TXT",
+              "TOKEN_TXT_B64",
+          ]
+
+          updated = []
+          for secret_name in secret_names:
+              value = os.environ.get(secret_name, "")
+              if value:
+                  api.add_space_secret(repo_id=repo_id, key=secret_name, value=value)
+                  updated.append(secret_name)
+
+          if updated:
+              print(f"Updated Space secrets: {', '.join(updated)}")
+          else:
+              print("No runtime secrets provided from GitHub Secrets, skipped Space secret update.")
+          PY
+
       - name: Sync Hugging Face Space
         if: github.event_name == 'push' || inputs.deploy_hf
         env:
