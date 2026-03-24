@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.2.0.25</Version>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(E5RenewerAot)' == 'true' And $([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net7.0'))">
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <DefineConstaints>$(DefineConstaints);E5RENEWER_AOT</DefineConstaints>
+  </PropertyGroup>
+
+</Project>

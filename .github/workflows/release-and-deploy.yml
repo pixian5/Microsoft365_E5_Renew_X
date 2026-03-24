@@ -1,0 +1,78 @@
+name: Release And Deploy
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to create and publish, for example v0.2.0.25
+        required: true
+        type: string
+      deploy_hf:
+        description: Also sync the Hugging Face Space
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'push' && github.ref_name || inputs.release_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Tag For Manual Run
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "${RELEASE_TAG}" "${GITHUB_SHA}"
+          git push origin "refs/tags/${RELEASE_TAG}" --force
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Prepare Scripts
+        run: chmod +x workspace/scripts/*.sh
+
+      - name: Build Publish Bundle
+        run: workspace/scripts/publish.sh
+
+      - name: Archive Publish Bundle
+        run: |
+          mkdir -p workspace/build/artifacts
+          tar -C workspace/build/publish -czf "workspace/build/artifacts/Microsoft365_E5_Renew_X-${RELEASE_TAG}.tar.gz" .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          generate_release_notes: true
+          files: |
+            workspace/build/artifacts/Microsoft365_E5_Renew_X-${{ env.RELEASE_TAG }}.tar.gz
+
+      - name: Sync Hugging Face Space
+        if: github.event_name == 'push' || inputs.deploy_hf
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
+          HF_COMMIT_MESSAGE: Deploy ${{ env.RELEASE_TAG }} from GitHub Actions
+        run: |
+          if [[ -z "${HF_TOKEN:-}" || -z "${HF_SPACE_ID:-}" ]]; then
+            echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping HF deployment."
+            exit 0
+          fi
+
+          chmod +x workspace/scripts/*.sh
+          workspace/scripts/sync-hf-space.sh

@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      mstest:
+        applies-to: "version-updates"
+        patterns:
+          - "MSTest.*"
+    ignore:
+      - dependency-name: "Microsoft.CodeAnalysis.*"
+        update-types:
+          - "version-update:semver-minor"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

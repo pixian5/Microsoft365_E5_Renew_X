@@ -1,0 +1,119 @@
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-and-publish:
+    name: "Test app and publish packages"
+    strategy:
+      matrix:
+        os:
+          - "windows-latest"
+          - "ubuntu-latest"
+          - "macos-latest"
+        dotnet:
+          - "8.0"
+        arch:
+          - "x64"
+          - "arm64"
+        aot:
+          - "true"
+          - "false"
+        self-contained:
+          - "true"
+          - "false"
+        exclude:
+          - aot: "true"
+            self-contained: "false"
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: "Fix long path on windows"
+        if: matrix.os == 'windows-latest'
+        run: "git config --system core.longpaths true"
+
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+
+      - name: "Setup .NET"
+        uses: "actions/setup-dotnet@v4"
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+
+      - name: Check whitespace
+        run: dotnet format whitespace --verify-no-changes
+
+      - name: Check style
+        run: dotnet format style --verify-no-changes
+
+      - name: Run mstest
+        run: dotnet test --collect "XPlat Code Coverage"
+
+      - name: "Get build environment info"
+        id: build-env-info
+        shell: bash
+        run: |
+          # rid=linux-x64
+          case ${{ matrix.os }} in
+            ubuntu-latest) rid=linux-${{ matrix.arch }} ;;
+            windows-latest) rid=win-${{ matrix.arch }} ;;
+            macos-latest) rid=osx-${{ matrix.arch }} ;;
+            *) rid=$(dotnet --info | grep RID | cut -d : -f 2 | xargs) ;;
+          esac
+          # suffix=linux-x64-aot-self-contained
+          suffix=$rid-${{ matrix.aot == 'true' && 'aot' || 'noaot' }}-${{ matrix.self-contained == 'true' && 'self-contained' || 'require-runtime' }}
+          
+          echo "rid=$rid" >> "$GITHUB_OUTPUT"
+          echo "suffix=$suffix" >> "$GITHUB_OUTPUT"
+
+      - name: "Publish binary"
+        run: |
+          dotnet publish E5Renewer/E5Renewer.csproj \
+            --runtime ${{ steps.build-env-info.outputs.rid }} \
+            -p:E5RenewerAot=${{ matrix.aot }} \
+            --sc ${{ matrix.self-contained }}
+        shell: bash
+        
+      - name: "Create archive"
+        run: |
+          7z a E5Renewer-${{ steps.build-env-info.outputs.suffix }}.7z \
+            './E5Renewer/bin/Release/net${{ matrix.dotnet }}/${{ steps.build-env-info.outputs.rid }}/publish/*'
+        shell: bash
+
+      - name: "Upload archive"
+        if: github.ref_type == 'tag'
+        uses: "actions/upload-artifact@v4"
+        with:
+          name: "E5Renewer-${{ steps.build-env-info.outputs.suffix }}"
+          path: "E5Renewer-${{ steps.build-env-info.outputs.suffix }}.7z"
+
+  release:
+    name: "Upload release"
+    runs-on: "ubuntu-latest"
+    needs: "test-and-publish"
+    permissions:
+      contents: "write"
+    if: github.ref_type == 'tag'
+    steps:
+      - name: "Download archive"
+        uses: "actions/download-artifact@v4"
+
+      - name: "Create release"
+        uses: "softprops/action-gh-release@v2"
+        with:
+          files: "**/E5Renewer-*.7z"
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            Difference between self-contained and require-runtime: 
+            You have to install asp.net runtime and dotnet runtime if using `require-runtime` version.
+
+            Difference between aot and noaot: 
+            See [here](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot)

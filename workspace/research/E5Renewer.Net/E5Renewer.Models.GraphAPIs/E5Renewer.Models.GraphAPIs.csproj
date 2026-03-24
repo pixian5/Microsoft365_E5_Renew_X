@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\E5Renewer.Models.Modules\E5Renewer.Models.Modules.csproj" />
+    <ProjectReference Include="..\E5Renewer.Models.Secrets\E5Renewer.Models.Secrets.csproj" />
+    <ProjectReference Include="..\E5Renewer.Models.Statistics\E5Renewer.Models.Statistics.csproj" />
+    <ProjectReference Include="..\E5Renewer.Models.SourceGenerators.ModulesInAssemblyGenerator\E5Renewer.Models.SourceGenerators.ModulesInAssemblyGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.13.2" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.Graph" Version="5.64.0" />
+    <PackageReference Include="SemanticVersioning" Version="3.0.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

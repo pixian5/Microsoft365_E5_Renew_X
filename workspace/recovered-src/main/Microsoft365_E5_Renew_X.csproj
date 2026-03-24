@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <AssemblyName>Microsoft365_E5_Renew_X</AssemblyName>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+  <PropertyGroup>
+    <LangVersion>12.0</LangVersion>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace />
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="8---g---j-rn9-cd3-.-6--f----i-o--rr-1" />
+    <None Remove="-y594----9u53-rvlk.rw--c---oyr-0i--q2" />
+    <EmbeddedResource Include="8---g---j-rn9-cd3-.-6--f----i-o--rr-1" LogicalName="8̗̅̌g̗̋̀j̆rn9̋cd3̘.̓6̒̀f̒̌̃̈i̘o̔̓rṙ1" />
+    <EmbeddedResource Include="-y594----9u53-rvlk.rw--c---oyr-0i--q2" LogicalName="̒y594̇́̌̋9u53̏rvlk.rw̖̘c̊̂̍oyr̀0i̅̋q2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.AspNetCore.Authentication.MicrosoftAccount">
+      <HintPath>Microsoft.AspNetCore.Authentication.MicrosoftAccount.dll</HintPath>
+    </Reference>
+    <Reference Include="AspNet.Security.OAuth.GitHub">
+      <HintPath>AspNet.Security.OAuth.GitHub.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore">
+      <HintPath>Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Identity.Client">
+      <HintPath>Microsoft.Identity.Client.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.EntityFrameworkCore">
+      <HintPath>Microsoft.EntityFrameworkCore.dll</HintPath>
+    </Reference>
+    <Reference Include="FileContextCore">
+      <HintPath>FileContextCore.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

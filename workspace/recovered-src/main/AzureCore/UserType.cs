@@ -1,0 +1,43 @@
+using System.Runtime.CompilerServices;
+
+namespace AzureCore;
+
+public class UserType
+{
+	private string _Type;
+
+	public string Type => _Type;
+
+	public static UserType Organization => new UserType(_0300_0300_0300_000D_000A_0300_0300_0300_0300_0301_0309._0300_0300_0300_000D_000A_0300_0300_0300_0300_0302_0310(0x14231C79 ^ 0x14231F8B));
+
+	public static UserType Common => new UserType(_0300_0300_0300_000D_000A_0300_0300_0300_0300_0301_0309._0300_0300_0300_000D_000A_0300_0300_0300_0300_0302_0310(0x13E75F62 ^ 0x13E75B72));
+
+	public static UserType Tenant => new UserType(_0300_0300_0300_000D_000A_0300_0300_0300_0300_0301_0309._0300_0300_0300_000D_000A_0300_0300_0300_0300_0302_0310(0x41B7B0EF ^ 0x41B7B4CF));
+
+	public static UserType Consumers => new UserType(_0300_0300_0300_000D_000A_0300_0300_0300_0300_0301_0309._0300_0300_0300_000D_000A_0300_0300_0300_0300_0302_0310(-1520727023 ^ -1520728031));
+
+	public UserType(string Type)
+	{
+		_0300_0300_0300_000D_000A_0300_0300_0300_0300_0304_030A._0300_0300_0300_000D_000A_0300_0300_0300_0300_0316_0310();
+		base._002Ector();
+		_Type = Type;
+	}
+
+	public static bool operator ==(UserType left, UserType right)
+	{
+		if (_0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0305._0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0300(left.Type, right.Type, _0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0305._0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0313))
+		{
+			return true;
+		}
+		return false;
+	}
+
+	public static bool operator !=(UserType left, UserType right)
+	{
+		if (_0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0305._0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0300(left.Type, right.Type, _0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0305._0300_0300_0300_000D_000A_0300_0300_0300_0300_0305_0306))
+		{
+			return true;
+		}
+		return false;
+	}
+}

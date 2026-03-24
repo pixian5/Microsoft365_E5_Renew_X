@@ -1,0 +1,13 @@
+**/.DS_Store
+**/bin
+**/obj
+**/.git
+**/.idea
+**/.vscode
+archive
+runtime/history
+workspace/build
+workspace/recovered-src
+.tools
+Deploy/user-secret.json
+Deploy/token.txt

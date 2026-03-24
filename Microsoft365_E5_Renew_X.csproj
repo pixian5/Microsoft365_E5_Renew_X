@@ -1,0 +1,60 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Microsoft365_E5_Renew_X</AssemblyName>
+    <RootNamespace>Microsoft365_E5_Renew_X</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="archive/**" />
+    <Compile Remove="workspace/research/**" />
+    <Compile Remove="workspace/recovered-src/**" />
+    <Compile Remove="workspace/build/**" />
+    <Compile Remove="workspace/scripts/**" />
+    <EmbeddedResource Remove="archive/**" />
+    <EmbeddedResource Remove="workspace/research/**" />
+    <EmbeddedResource Remove="workspace/recovered-src/**" />
+    <EmbeddedResource Remove="workspace/build/**" />
+    <EmbeddedResource Remove="workspace/scripts/**" />
+    <None Remove="archive/**" />
+    <None Remove="workspace/research/**" />
+    <None Remove="workspace/recovered-src/**" />
+    <None Remove="workspace/build/**" />
+    <None Remove="workspace/scripts/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="workspace/research/E5Renewer.Net/E5Renewer/E5Renewer.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+    <Content Update="appsettings.Development.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </Content>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+    <None Update="appsettings.Development.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
+  </ItemGroup>
+
+  <Target Name="TrimReleaseOutput" AfterTargets="Build" Condition="'$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <ReleaseJunk Include="$(OutputPath)**/*.pdb" />
+      <ReleaseJunk Include="$(OutputPath)**/*.xml" />
+      <ReleaseJunk Include="$(OutputPath)**/web.config" />
+      <ReleaseJunk Include="$(OutputPath)**/.DS_Store" />
+    </ItemGroup>
+    <Delete Files="@(ReleaseJunk)" TreatErrorsAsWarnings="true" />
+  </Target>
+</Project>
