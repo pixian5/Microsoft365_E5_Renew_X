@@ -698,16 +698,16 @@ static string RenderHome(AppOptions options)
           <label>
             <div class="field-head">
               <span>开始时间</span>
-              <span class="hint">：08:00:00 或 7</span>
+              <span class="hint">：00:00:00 或 0</span>
             </div>
-            <input id="from_time" placeholder="08:00:00 或 7">
+            <input id="from_time" placeholder="00:00:00 或 0">
           </label>
           <label>
             <div class="field-head">
               <span>结束时间</span>
-              <span class="hint">：23:00:00 或 22</span>
+              <span class="hint">：24:00:00 或 24</span>
             </div>
-            <input id="to_time" placeholder="23:00:00 或 22">
+            <input id="to_time" placeholder="24:00:00 或 24">
           </label>
         </div>
         <div>
@@ -743,10 +743,10 @@ static string RenderHome(AppOptions options)
       <form id="settingsForm">
         <div class="form-grid">
           <label>统一开始时间
-            <input id="settings_from_time" placeholder="08:00:00 或 8">
+            <input id="settings_from_time" placeholder="00:00:00 或 0">
           </label>
           <label>统一结束时间
-            <input id="settings_to_time" placeholder="23:00:00 或 23">
+            <input id="settings_to_time" placeholder="24:00:00 或 24">
           </label>
         </div>
         <div class="form-grid">
@@ -992,7 +992,7 @@ static string RenderHome(AppOptions options)
 
       const rows = state.users.map((user, index) => {
         const valid = Boolean(user.name && user.tenant_id && user.client_id && (user.secret || user.certificate));
-        const windowText = [user.from_time || '08:00:00', user.to_time || '16:00:00'].join(' - ');
+        const windowText = [user.from_time || '00:00:00', user.to_time || '24:00:00'].join(' - ');
         const actionLabel = user.is_stopped ? '启动' : '停止';
         const actionClass = user.is_stopped ? 'secondary' : 'danger';
         return `
@@ -1269,8 +1269,8 @@ static string RenderHome(AppOptions options)
     }
 
     function resetSettingsForm() {
-      document.getElementById('settings_from_time').value = '08:00:00';
-      document.getElementById('settings_to_time').value = '16:00:00';
+      document.getElementById('settings_from_time').value = '00:00:00';
+      document.getElementById('settings_to_time').value = '24:00:00';
       document.getElementById('settings_api_interval_min_seconds').value = '1';
       document.getElementById('settings_api_interval_max_seconds').value = '1';
       document.getElementById('settings_frontend_refresh_seconds').value = '5';
@@ -1279,8 +1279,8 @@ static string RenderHome(AppOptions options)
 
     function applySettingsToForm(settings) {
       const source = settings || {};
-      document.getElementById('settings_from_time').value = source.from_time || '08:00:00';
-      document.getElementById('settings_to_time').value = source.to_time || '16:00:00';
+      document.getElementById('settings_from_time').value = source.from_time || '00:00:00';
+      document.getElementById('settings_to_time').value = source.to_time || '24:00:00';
       const minSeconds = Number(source.api_call_interval_min_seconds || source.api_call_interval_seconds || 1);
       const maxSeconds = Number(source.api_call_interval_max_seconds || source.api_call_interval_seconds || minSeconds || 1);
       document.getElementById('settings_api_interval_min_seconds').value = String(minSeconds);
@@ -1356,8 +1356,8 @@ static ManagedGlobalSettings DeriveSettingsFromUsers(IReadOnlyList<ManagedUserSe
     ManagedUserSecretAccount? firstUser = users.FirstOrDefault();
     return new ManagedGlobalSettings
     {
-        FromTime = firstUser?.FromTime ?? "08:00:00",
-        ToTime = firstUser?.ToTime ?? "16:00:00",
+        FromTime = firstUser?.FromTime ?? "00:00:00",
+        ToTime = firstUser?.ToTime ?? "23:59:59",
         Days = firstUser?.Days is { Count: > 0 } ? [.. firstUser.Days] : [1, 2, 3, 4, 5],
         ApiCallIntervalMinSeconds = 1,
         ApiCallIntervalMaxSeconds = 1,
@@ -1376,8 +1376,8 @@ static ManagedGlobalSettings NormalizeGlobalSettings(ManagedGlobalSettings setti
 
     return new ManagedGlobalSettings
     {
-        FromTime = NormalizeDashboardTime(settings.FromTime, false) ?? "08:00:00",
-        ToTime = NormalizeDashboardTime(settings.ToTime, true) ?? "16:00:00",
+        FromTime = NormalizeDashboardTime(settings.FromTime, false) ?? "00:00:00",
+        ToTime = NormalizeDashboardTime(settings.ToTime, true) ?? "23:59:59",
         Days = settings.Days?.Distinct().Order().ToList() is { Count: > 0 } days ? days : [1, 2, 3, 4, 5],
         ApiCallIntervalMinSeconds = apiCallIntervalMinSeconds,
         ApiCallIntervalMaxSeconds = apiCallIntervalMaxSeconds,

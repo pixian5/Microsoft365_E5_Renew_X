@@ -45,8 +45,8 @@ public readonly struct User
     {
         get
         {
-            TimeOnly fromTime = this.fromTime ?? new(8, 0);
-            TimeOnly toTime = this.toTime ?? new(16, 0);
+            TimeOnly fromTime = this.fromTime ?? new(0, 0);
+            TimeOnly toTime = this.toTime ?? new(23, 59, 59);
             ImmutableList<DayOfWeek> days = this.days ?? ImmutableList.Create(
                 DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday);
 
