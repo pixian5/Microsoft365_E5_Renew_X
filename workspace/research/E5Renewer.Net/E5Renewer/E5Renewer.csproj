@@ -110,8 +110,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.DeviceEnrollmentConfigurations\E5Renewer.Models.GraphAPIs.DeviceManagement.DeviceEnrollmentConfigurations.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.DeviceManagementPartners.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.DeviceManagementPartners.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.DeviceManagementPartners\E5Renewer.Models.GraphAPIs.DeviceManagement.DeviceManagementPartners.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.ExchangeConnectors.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.ExchangeConnectors.Count.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.ExchangeConnectors\E5Renewer.Models.GraphAPIs.DeviceManagement.ExchangeConnectors.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.ImportedWindowsAutopilotDeviceIdentities.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.ImportedWindowsAutopilotDeviceIdentities.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.ImportedWindowsAutopilotDeviceIdentities\E5Renewer.Models.GraphAPIs.DeviceManagement.ImportedWindowsAutopilotDeviceIdentities.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.IosUpdateStatuses.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.IosUpdateStatuses.Count.csproj" />
@@ -265,7 +263,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Education.Me.Schools\E5Renewer.Models.GraphAPIs.Education.Me.Schools.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Education.Me.TaughtClasses.Count\E5Renewer.Models.GraphAPIs.Education.Me.TaughtClasses.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Education.Me.TaughtClasses\E5Renewer.Models.GraphAPIs.Education.Me.TaughtClasses.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Education.Me.User.MailboxSettings\E5Renewer.Models.GraphAPIs.Education.Me.User.MailboxSettings.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Education.Me.User.ServiceProvisioningErrors.Count\E5Renewer.Models.GraphAPIs.Education.Me.User.ServiceProvisioningErrors.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Education.Me.User.ServiceProvisioningErrors\E5Renewer.Models.GraphAPIs.Education.Me.User.ServiceProvisioningErrors.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Education.Me.User\E5Renewer.Models.GraphAPIs.Education.Me.User.csproj" />
@@ -519,8 +516,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleDefinitions\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleDefinitions.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleInstances.Count\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleInstances.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleInstances\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleInstances.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleRequests.Count\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleRequests.Count.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleRequests\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilityScheduleRequests.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilitySchedules.Count\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilitySchedules.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilitySchedules\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.RoleEligibilitySchedules.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.csproj" />
@@ -536,8 +531,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleAssignmentSchedules\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleAssignmentSchedules.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleDefinitions.Count\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleDefinitions.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleDefinitions\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleDefinitions.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilityScheduleRequests.Count\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilityScheduleRequests.Count.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilityScheduleRequests\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilityScheduleRequests.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilitySchedules.Count\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilitySchedules.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilitySchedules\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleEligibilitySchedules.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.csproj" />
