@@ -211,6 +211,13 @@ app.MapPost("/dashboard/settings", async (
         cancellationToken) ?? new ManagedGlobalSettings();
 
     var document = await service.ReadAsync(cancellationToken);
+    var previousIntervalRange = await dashboardSettingsService.GetApiCallIntervalSecondsRangeAsync(cancellationToken);
+    int previousFrontendRefreshSeconds = await dashboardSettingsService.GetFrontendRefreshSecondsAsync(cancellationToken);
+    var previousSettings = BuildSettingsResponse(
+        document,
+        previousIntervalRange.MinSeconds,
+        previousIntervalRange.MaxSeconds,
+        previousFrontendRefreshSeconds);
     var normalizedSettings = NormalizeGlobalSettings(payload);
     document.Settings = normalizedSettings;
     document.Users = document.Users
@@ -224,11 +231,15 @@ app.MapPost("/dashboard/settings", async (
         cancellationToken);
     int frontendRefreshSeconds = await dashboardSettingsService.SaveFrontendRefreshSecondsAsync(normalizedSettings.FrontendRefreshSeconds, cancellationToken);
     var settings = BuildSettingsResponse(savedDocument, intervalRange.MinSeconds, intervalRange.MaxSeconds, frontendRefreshSeconds);
+    bool restartRequired = AreScheduleSettingsDifferent(previousSettings, settings);
+    string message = restartRequired
+        ? "统一设置已保存。接口等待区间与前端自动刷新时间已即时生效；运行时间与星期已写入配置，重启后会影响后台调度。"
+        : "统一设置已保存。前端自动刷新时间与接口等待区间已即时生效。";
 
     return Results.Json(new
     {
-        message = "统一设置已保存。运行时间与星期已应用到全部账号；接口等待区间与前端自动刷新时间已写入 appsettings.json。",
-        restart_required = true,
+        message,
+        restart_required = restartRequired,
         settings
     });
 });
@@ -1181,7 +1192,7 @@ static string RenderHome(AppOptions options)
           return;
         }
 
-        showMessage(`${data.message} 如需让运行时间和星期立即影响后台调度，请重启服务。`, 'success');
+        showMessage(data.message || '统一设置已保存。', 'success');
       } catch (error) {
         showMessage(error.message || '保存统一设置失败', 'error');
       }
@@ -1388,6 +1399,23 @@ static ManagedUserSecretAccount ApplyGlobalSettings(ManagedUserSecretAccount use
         SuccessCount = user.SuccessCount,
         FailureCount = user.FailureCount
     };
+}
+
+static bool AreScheduleSettingsDifferent(ManagedGlobalSettings previousSettings, ManagedGlobalSettings currentSettings)
+{
+    if (!string.Equals(previousSettings.FromTime, currentSettings.FromTime, StringComparison.Ordinal))
+    {
+        return true;
+    }
+
+    if (!string.Equals(previousSettings.ToTime, currentSettings.ToTime, StringComparison.Ordinal))
+    {
+        return true;
+    }
+
+    int[] previousDays = previousSettings.Days?.ToArray() ?? [];
+    int[] currentDays = currentSettings.Days?.ToArray() ?? [];
+    return !previousDays.SequenceEqual(currentDays);
 }
 
 static string? NormalizeDashboardTime(string? value, bool isEndTime)
