@@ -10,6 +10,13 @@ app_port: 7860
 
 这个仓库的定位不是“从零实现 E5 刷新逻辑”，而是把已有的续订引擎封装成一个更容易本地运行、远程托管、多人维护的管理端。
 
+当前推荐流程已经切换为：
+
+- 本地主要负责改代码、提交、推送
+- GitHub Actions 负责构建 `linux-x64` 发布包并创建 Release
+- Hugging Face Space 从 GitHub Release 拉取发布包并自动部署
+- Windows、macOS、Linux 实体机如果要直接运行，优先使用 GitHub Release 解压后的发布目录
+
 ## 项目特性
 
 - 多账户统一管理，可直接在 Web 页面里新增、修改、暂停、恢复账号。
@@ -124,7 +131,7 @@ cp Deploy/token.txt.example Deploy/token.txt
 
 然后编辑 `Deploy/user-secret.json` 与 `Deploy/token.txt`。
 
-### 3. 构建
+### 3. 本地开发构建
 
 仓库已经自带脚本：
 
@@ -192,31 +199,63 @@ Windows PowerShell：
 - `stop-background.ps1`
 - `status.ps1`
 
-### 6. 三平台实体机运行说明
+### 6. 推荐的日常发布方式
+
+如果你的目标是部署到服务器或 Hugging Face，推荐流程不是本地 build，而是：
+
+1. 本地修改代码。
+2. 提交并推送到 GitHub。
+3. GitHub Actions 自动创建新版本 Release。
+4. GitHub Actions 自动同步 Hugging Face Space。
+5. 服务器场景直接下载 GitHub Release 解压运行。
+
+也就是说，日常维护时，本地更像“编辑端”，GitHub Actions 才是正式“构建端”。
+
+### 7. 三平台实体机运行说明
 
 #### macOS
 
-1. 安装 `.NET 10 SDK` 或对应运行时。
-2. 构建：`./workspace/scripts/build.sh`
-3. 后台运行：`./workspace/scripts/start-background.sh`
-4. 查看状态：`./workspace/scripts/status.sh`
-5. 查看日志：`tail -f runtime/history/console-*.log`
+推荐两种方式：
+
+1. 开发态直接跑源码：
+   安装 `.NET 10 SDK`，执行 `./workspace/scripts/build.sh`，再执行 `./workspace/scripts/start-background.sh`
+2. 运维态跑发布包：
+   下载 GitHub Release，解压后直接执行发布目录里的 `./start-background.sh`
+
+常用命令：
+
+- 后台运行：`./workspace/scripts/start-background.sh`
+- 查看状态：`./workspace/scripts/status.sh`
+- 查看日志：`tail -f runtime/history/console-*.log`
 
 #### Linux
 
-1. 安装 `.NET 10 SDK` 或对应运行时。
-2. 构建：`./workspace/scripts/build.sh`
-3. 后台运行：`./workspace/scripts/start-background.sh`
-4. 查看状态：`./workspace/scripts/status.sh`
-5. 停止：`./workspace/scripts/stop-background.sh`
+推荐直接使用 GitHub Release 发布包，解压后运行发布目录里的：
+
+- `./start-background.sh`
+- `./status.sh`
+- `./stop-background.sh`
+
+如果你确实要在 Linux 上从源码开发，再安装 `.NET 10 SDK` 后执行：
+
+- `./workspace/scripts/build.sh`
+- `./workspace/scripts/start-background.sh`
+- `./workspace/scripts/status.sh`
+- `./workspace/scripts/stop-background.sh`
 
 如果是服务器场景，更推荐直接使用 GitHub Release 发布包，解压后运行发布目录中的后台脚本，而不是在服务器现编译源码。
 
 #### Windows
 
-1. 安装 `.NET 10 SDK` 或对应运行时。
-2. 用 PowerShell 进入仓库目录。
-3. 构建：
+推荐优先使用 GitHub Release 发布包。解压后在 PowerShell 中执行：
+
+```powershell
+./start-background.ps1
+./status.ps1
+./stop-background.ps1
+```
+
+如果你是本地开发，再安装 `.NET 10 SDK` 或对应运行时，用 PowerShell 进入仓库目录后执行构建：
 
 ```powershell
 dotnet clean .\Microsoft365_E5_Renew_X.csproj -c Release
@@ -238,7 +277,7 @@ dotnet build .\Microsoft365_E5_Renew_X.csproj -c Release
 
 默认日志目录同样是 `runtime/history/`。
 
-### 7. 验证
+### 8. 验证
 
 浏览器打开首页后，应该能看到：
 
@@ -500,21 +539,22 @@ docker run --rm -p 7860:7860 \
 
 工作流文件：
 
-- [.github/workflows/release-and-deploy.yml](/Users/x/code/Microsoft365_E5_Renew_X/.github/workflows/release-and-deploy.yml)
+- [release-and-deploy-v2.yml](/Users/x/code/Microsoft365_E5_Renew_X/.github/workflows/release-and-deploy-v2.yml)
 
 触发方式：
 
-- 推送标签 `v*`
+- 推送到 `main`
 - 手工触发 `workflow_dispatch`
 
 主要步骤：
 
 1. 检出代码
-2. 安装 `.NET 10`
-3. 执行 `workspace/scripts/publish.sh`
+2. 解析 [Directory.Build.props](/Users/x/code/Microsoft365_E5_Renew_X/workspace/research/E5Renewer.Net/Directory.Build.props) 中的版本号
+3. 用 `linux-x64` 执行 `workspace/scripts/publish.sh`
 4. 打包 `workspace/build/publish`
-5. 上传到 GitHub Release
-6. 可选同步 Hugging Face Space
+5. 创建或更新对应 Git tag 与 GitHub Release
+6. 自动同步 Hugging Face Space
+7. 自动触发 HF 重启，并等待新 runtime sha 与 Space sha 一致
 
 GitHub Secrets：
 
@@ -522,6 +562,13 @@ GitHub Secrets：
 - `HF_SPACE_ID`
 - `USER_SECRET_JSON` 或 `USER_SECRET_JSON_B64`
 - `TOKEN_TXT` 或 `TOKEN_TXT_B64`
+
+如果这些 Secrets 配齐了，那么标准流程就是：
+
+1. 改代码
+2. `git commit`
+3. `git push`
+4. 等 GitHub Actions 自动完成 Release 与 HF 部署
 
 ## 构建与发布脚本
 
@@ -554,6 +601,7 @@ GitHub Secrets：
 - 保存账号配置后，页面会提示需要重启；这是预期行为。
 - `runtime/history/` 下会保留运行日志，排查问题时先看这里。
 - macOS 下如果一键重启失败，程序会在 `runtime/restart.log` 里留下启动和回退信息。
+- 现在更推荐让 GitHub Actions 负责正式构建；本地构建主要用于开发调试。
 
 ## 常见问题
 
