@@ -34,6 +34,9 @@ ensure_release_bundle() {
   rm -rf "$CURRENT_ROOT"
   mkdir -p "$CURRENT_ROOT"
   cp -R "$temp_dir"/. "$CURRENT_ROOT"/
+  rm -rf "$CURRENT_ROOT/Deploy" "$CURRENT_ROOT/runtime"
+  ln -s "$DEPLOY_DIR" "$CURRENT_ROOT/Deploy"
+  ln -s "$APP_ROOT/runtime" "$CURRENT_ROOT/runtime"
   printf '%s' "$BUNDLE_URL" > "$BUNDLE_MARKER"
 
   rm -rf "$temp_dir"
