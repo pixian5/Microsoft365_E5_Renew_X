@@ -6,12 +6,18 @@ OUT_DIR="$ROOT/workspace/build/publish"
 APP_DIR="$OUT_DIR/app"
 PUBLISH_RUNTIME="${PUBLISH_RUNTIME:-}"
 PUBLISH_SELF_CONTAINED="${PUBLISH_SELF_CONTAINED:-false}"
+APP_VERSION="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$ROOT/workspace/research/E5Renewer.Net/Directory.Build.props" | head -n 1)"
 
 if [[ -n "${DOTNET_ROOT:-}" ]]; then
   export PATH="$DOTNET_ROOT:$PATH"
 elif [[ -d /Users/x/Tools/dotnet ]]; then
   export DOTNET_ROOT=/Users/x/Tools/dotnet
   export PATH="$DOTNET_ROOT:$PATH"
+fi
+
+if [[ -z "$APP_VERSION" ]]; then
+  echo "Failed to resolve app version from Directory.Build.props" >&2
+  exit 1
 fi
 
 rm -rf "$OUT_DIR"
@@ -70,6 +76,8 @@ EOF
 
 chmod +x "$OUT_DIR/Microsoft365_E5_Renew_X"
 chmod +x "$OUT_DIR/start-background.sh" "$OUT_DIR/stop-background.sh" "$OUT_DIR/status.sh"
+
+printf '%s\n' "$APP_VERSION" > "$OUT_DIR/release-version.txt"
 
 find "$OUT_DIR" -name .DS_Store -delete
 
