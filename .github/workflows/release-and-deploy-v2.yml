@@ -175,23 +175,26 @@ jobs:
           print(f"Triggered Hugging Face Space factory reboot for {repo_id}")
           PY
 
-      - name: Check Hugging Face Runtime Update Once
+      - name: Wait For Hugging Face Runtime Update
         if: github.event_name == 'push' || inputs.deploy_hf
         env:
           HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
         run: |
           if [[ -z "${HF_SPACE_ID:-}" ]]; then
-            echo "HF_SPACE_ID is not configured, skipping HF runtime check."
+            echo "HF_SPACE_ID is not configured, skipping HF runtime polling."
             exit 0
           fi
 
           space_api_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}"
-          sleep 10
-          read -r repo_sha runtime_sha runtime_stage <<< "$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')"
-          echo "HF runtime stage: ${runtime_stage}, repo sha: ${repo_sha}, runtime sha: ${runtime_sha}"
-          if [[ -n "${repo_sha}" && "${runtime_stage}" == "RUNNING" && "${runtime_sha}" == "${repo_sha}" ]]; then
-            exit 0
-          fi
+          for attempt in {1..24}; do
+            read -r repo_sha runtime_sha runtime_stage <<< "$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')"
+            echo "HF runtime stage: ${runtime_stage}, repo sha: ${repo_sha}, runtime sha: ${runtime_sha} (attempt ${attempt}/24)"
+            if [[ -n "${repo_sha}" && "${runtime_stage}" == "RUNNING" && "${runtime_sha}" == "${repo_sha}" ]]; then
+              exit 0
+            fi
 
-          echo "HF runtime did not switch to the requested Space revision after the immediate check." >&2
+            sleep 10
+          done
+
+          echo "HF runtime did not switch to the requested Space revision within the polling window." >&2
           exit 1
