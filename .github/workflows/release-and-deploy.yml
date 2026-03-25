@@ -180,13 +180,16 @@ jobs:
 
           space_api_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}"
           for attempt in {1..18}; do
-            runtime_stage="$(curl -fsSL "$space_api_url" | python -c 'import json,sys; print(json.load(sys.stdin).get("runtime", {}).get("stage", ""))')"
-            echo "HF runtime stage: ${runtime_stage} (attempt ${attempt}/18)"
-            if [[ "${runtime_stage}" == "RUNNING" ]]; then
+            read -r repo_sha runtime_sha runtime_stage <<EOF
+$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')
+EOF
+            echo "HF runtime stage: ${runtime_stage}, repo sha: ${repo_sha}, runtime sha: ${runtime_sha} (attempt ${attempt}/18)"
+            if [[ -n "${repo_sha}" && "${runtime_stage}" == "RUNNING" && "${runtime_sha}" == "${repo_sha}" ]]; then
               exit 0
             fi
 
             sleep 10
           done
 
-          echo "HF runtime did not become RUNNING within the polling window."
+          echo "HF runtime did not switch to the requested Space revision within the polling window." >&2
+          exit 1
