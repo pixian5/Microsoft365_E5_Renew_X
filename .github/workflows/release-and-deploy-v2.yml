@@ -19,6 +19,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-and-deploy-main
+  cancel-in-progress: true
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -80,7 +84,7 @@ jobs:
         if: github.event_name == 'push' || inputs.deploy_hf
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Update Hugging Face Space Secrets
         if: github.event_name == 'push' || inputs.deploy_hf
@@ -179,11 +183,11 @@ jobs:
           fi
 
           space_api_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}"
-          for attempt in {1..18}; do
+          for attempt in {1..24}; do
             read -r repo_sha runtime_sha runtime_stage <<EOF
 $(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')
 EOF
-            echo "HF runtime stage: ${runtime_stage}, repo sha: ${repo_sha}, runtime sha: ${runtime_sha} (attempt ${attempt}/18)"
+            echo "HF runtime stage: ${runtime_stage}, repo sha: ${repo_sha}, runtime sha: ${runtime_sha} (attempt ${attempt}/24)"
             if [[ -n "${repo_sha}" && "${runtime_stage}" == "RUNNING" && "${runtime_sha}" == "${repo_sha}" ]]; then
               exit 0
             fi
