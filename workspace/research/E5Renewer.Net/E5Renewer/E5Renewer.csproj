@@ -155,8 +155,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.AuditEvents\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.AuditEvents.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.CloudPCs.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.Count.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.DeviceImages.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.GalleryImages.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.OnPremisesConnections.Count\E5Renewer.Models.GraphAPIs.DeviceManagement.VirtualEndpoint.OnPremisesConnections.Count.csproj" />
@@ -244,7 +242,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Identity.B2xUserFlows\E5Renewer.Models.GraphAPIs.Identity.B2xUserFlows.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationContextClassReferences\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationContextClassReferences.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationStrength.AuthenticationMethodModes\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationStrength.AuthenticationMethodModes.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationStrength.Policies.Count\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationStrength.Policies.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationStrength.Policies\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.AuthenticationStrength.Policies.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.NamedLocations.Count\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.NamedLocations.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.NamedLocations\E5Renewer.Models.GraphAPIs.Identity.ConditionalAccess.NamedLocations.csproj" />
@@ -322,7 +319,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Places.GraphRoomList.Count\E5Renewer.Models.GraphAPIs.Places.GraphRoomList.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Places.GraphRoomList\E5Renewer.Models.GraphAPIs.Places.GraphRoomList.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Plans.Count\E5Renewer.Models.GraphAPIs.Planner.Plans.Count.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Plans\E5Renewer.Models.GraphAPIs.Planner.Plans.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Tasks.Count\E5Renewer.Models.GraphAPIs.Planner.Tasks.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner.Tasks\E5Renewer.Models.GraphAPIs.Planner.Tasks.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Planner\E5Renewer.Models.GraphAPIs.Planner.csproj" />

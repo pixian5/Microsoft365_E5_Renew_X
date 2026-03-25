@@ -1,4 +1,5 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Net.Http;
 
 using Azure.Core;
 using Azure.Identity;
@@ -60,7 +61,17 @@ public class SimpleUserClientProvider : IUserClientProvider
             {
                 throw new NullReferenceException($"{nameof(user.certificate)} and {nameof(user.secret)} are both invalid.");
             }
-            GraphServiceClient client = new(credential, ["https://graph.microsoft.com/.default"]);
+
+            HttpClient httpClient = GraphClientFactory.Create(
+                credential,
+                [new ConsistencyLevelHandler()],
+                version: "v1.0",
+                nationalCloud: GraphClientFactory.Global_Cloud,
+                proxy: null,
+                finalHandler: null,
+                disposeHandler: true);
+
+            GraphServiceClient client = new(httpClient, credential, ["https://graph.microsoft.com/.default"]);
             this.clients[user] = client;
         }
         return this.clients[user];
