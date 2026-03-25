@@ -65,6 +65,9 @@ jobs:
         run: chmod +x workspace/scripts/*.sh
 
       - name: Build Publish Bundle
+        env:
+          PUBLISH_RUNTIME: linux-x64
+          PUBLISH_SELF_CONTAINED: "false"
         run: workspace/scripts/publish.sh
 
       - name: Archive Publish Bundle
@@ -184,9 +187,7 @@ jobs:
 
           space_api_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}"
           for attempt in {1..24}; do
-            read -r repo_sha runtime_sha runtime_stage <<EOF
-$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')
-EOF
+            read -r repo_sha runtime_sha runtime_stage <<< "$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')"
             echo "HF runtime stage: ${runtime_stage}, repo sha: ${repo_sha}, runtime sha: ${runtime_sha} (attempt ${attempt}/24)"
             if [[ -n "${repo_sha}" && "${runtime_stage}" == "RUNNING" && "${runtime_sha}" == "${repo_sha}" ]]; then
               exit 0
