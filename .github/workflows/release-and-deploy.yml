@@ -164,8 +164,8 @@ jobs:
               raise SystemExit(0)
 
           api = HfApi(token=token)
-          api.restart_space(repo_id=repo_id)
-          print(f"Triggered Hugging Face Space restart for {repo_id}")
+          api.restart_space(repo_id=repo_id, factory_reboot=True)
+          print(f"Triggered Hugging Face Space factory reboot for {repo_id}")
           PY
 
       - name: Wait For Hugging Face Runtime Update
