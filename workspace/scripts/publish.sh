@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT_DIR="$ROOT/workspace/build/publish"
 APP_DIR="$OUT_DIR/app"
+PUBLISH_RUNTIME="${PUBLISH_RUNTIME:-}"
+PUBLISH_SELF_CONTAINED="${PUBLISH_SELF_CONTAINED:-false}"
 
 if [[ -n "${DOTNET_ROOT:-}" ]]; then
   export PATH="$DOTNET_ROOT:$PATH"
@@ -15,7 +17,18 @@ fi
 rm -rf "$OUT_DIR"
 mkdir -p "$APP_DIR" "$OUT_DIR/Deploy" "$OUT_DIR/runtime/history" "$OUT_DIR/wwwroot"
 
-dotnet publish "$ROOT/Microsoft365_E5_Renew_X.csproj" -c Release -o "$APP_DIR"
+publish_args=(
+  "$ROOT/Microsoft365_E5_Renew_X.csproj"
+  -c Release
+  -o "$APP_DIR"
+  --self-contained "$PUBLISH_SELF_CONTAINED"
+)
+
+if [[ -n "$PUBLISH_RUNTIME" ]]; then
+  publish_args+=(-r "$PUBLISH_RUNTIME")
+fi
+
+dotnet publish "${publish_args[@]}"
 
 find "$APP_DIR" -type f \( -name '*.pdb' -o -name '*.xml' -o -name 'web.config' \) -delete
 
@@ -61,3 +74,8 @@ chmod +x "$OUT_DIR/start-background.sh" "$OUT_DIR/stop-background.sh" "$OUT_DIR/
 find "$OUT_DIR" -name .DS_Store -delete
 
 printf 'Publish directory created at: %s\n' "$OUT_DIR"
+if [[ -n "$PUBLISH_RUNTIME" ]]; then
+  printf 'Publish runtime: %s\n' "$PUBLISH_RUNTIME"
+else
+  printf 'Publish runtime: default host runtime\n'
+fi
