@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 
 ARG GITHUB_REPOSITORY="__GITHUB_REPOSITORY__"
@@ -16,10 +16,7 @@ ENV DOTNET_EnableDiagnostics=0 \
 
 COPY docker/entrypoint.sh /entrypoint.sh
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl tar \
-    && rm -rf /var/lib/apt/lists/* \
-    && test -n "$RELEASE_BUNDLE_URL" \
+RUN test -n "$RELEASE_BUNDLE_URL" \
     && test -n "$RELEASE_VERSION_URL" \
     && printf '%s' "$RELEASE_BUNDLE_URL" | grep -Eq '^https://.+' \
     && printf '%s' "$RELEASE_VERSION_URL" | grep -Eq '^https://.+' \

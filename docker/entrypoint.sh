@@ -20,6 +20,78 @@ log() {
   printf '[%s] %s\n' "$timestamp" "$message" | tee -a "$STARTUP_LOG"
 }
 
+parse_url_host() {
+  printf '%s' "$1" | perl -e 'my $u=<>; $u =~ s/[\r\n]+$//; $u =~ m{^https://([^/]+)(/.*)$} or exit 1; print $1;'
+}
+
+parse_url_path() {
+  printf '%s' "$1" | perl -e 'my $u=<>; $u =~ s/[\r\n]+$//; $u =~ m{^https://([^/]+)(/.*)$} or exit 1; print $2;'
+}
+
+response_status_code() {
+  perl -e 'my $path=shift; open my $fh, "<", $path or exit 1; binmode $fh; local $/; my $raw=<$fh>; my ($head)=split(/\r?\n\r?\n/, $raw, 2); my ($status)=$head =~ m{^HTTP/\S+\s+(\d+)}; print $status if defined $status;' "$1"
+}
+
+response_location() {
+  perl -e 'my $path=shift; open my $fh, "<", $path or exit 1; binmode $fh; local $/; my $raw=<$fh>; my ($head)=split(/\r?\n\r?\n/, $raw, 2); my ($location)=$head =~ m{^Location:\s*(.+)$}mi; if (defined $location) { $location =~ s/\r$//; print $location; }' "$1"
+}
+
+response_body_to_file() {
+  perl -e 'my ($path, $out)=@ARGV; open my $fh, "<", $path or die; binmode $fh; local $/; my $raw=<$fh>; my (undef, $body)=split(/\r?\n\r?\n/, $raw, 2); open my $target, ">", $out or die; binmode $target; print {$target} $body if defined $body;' "$1" "$2"
+}
+
+download_url_to_file() {
+  current_url="$1"
+  output_path="$2"
+  redirect_count=0
+
+  while [ "$redirect_count" -lt 5 ]; do
+    host="$(parse_url_host "$current_url")" || return 1
+    path="$(parse_url_path "$current_url")" || return 1
+    request_file="$(mktemp)"
+    response_file="$(mktemp)"
+
+    printf 'GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: Microsoft365_E5_Renew_X/1.0\r\nAccept: */*\r\nConnection: close\r\n\r\n' "$path" "$host" > "$request_file"
+
+    if ! openssl s_client -quiet -connect "$host:443" < "$request_file" 2>/dev/null > "$response_file"; then
+      rm -f "$request_file" "$response_file"
+      return 1
+    fi
+
+    status_code="$(response_status_code "$response_file")"
+    case "$status_code" in
+      200)
+        response_body_to_file "$response_file" "$output_path"
+        rm -f "$request_file" "$response_file"
+        return 0
+        ;;
+      301|302|303|307|308)
+        next_url="$(response_location "$response_file")"
+        rm -f "$request_file" "$response_file"
+        if [ -z "$next_url" ]; then
+          return 1
+        fi
+
+        case "$next_url" in
+          /*)
+            current_url="https://${host}${next_url}"
+            ;;
+          *)
+            current_url="$next_url"
+            ;;
+        esac
+        redirect_count=$((redirect_count + 1))
+        ;;
+      *)
+        rm -f "$request_file" "$response_file"
+        return 1
+        ;;
+    esac
+  done
+
+  return 1
+}
+
 current_bundle_version() {
   if [ -f "$CURRENT_ROOT/release-version.txt" ]; then
     tr -d '\r\n' < "$CURRENT_ROOT/release-version.txt"
@@ -36,7 +108,14 @@ resolve_target_version() {
     return 1
   fi
 
-  target_version="$(curl -fsSL "$RELEASE_VERSION_URL" | tr -d '\r\n')"
+  version_file="$(mktemp)"
+  if ! download_url_to_file "$RELEASE_VERSION_URL" "$version_file"; then
+    rm -f "$version_file"
+    return 1
+  fi
+
+  target_version="$(tr -d '\r\n' < "$version_file")"
+  rm -f "$version_file"
   if [ -z "$target_version" ]; then
     return 1
   fi
@@ -80,7 +159,10 @@ ensure_release_bundle() {
   temp_dir="$(mktemp -d)"
   trap 'rm -rf "$temp_dir"' EXIT INT TERM
 
-  curl -fsSL "$BUNDLE_URL" -o "$temp_dir/release.tar.gz"
+  if ! download_url_to_file "$BUNDLE_URL" "$temp_dir/release.tar.gz"; then
+    log "发布包下载失败。url=$BUNDLE_URL"
+    exit 1
+  fi
   tar -xzf "$temp_dir/release.tar.gz" -C "$temp_dir"
   chmod +x "$temp_dir/Microsoft365_E5_Renew_X"
 
