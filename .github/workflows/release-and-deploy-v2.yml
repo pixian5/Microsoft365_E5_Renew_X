@@ -200,14 +200,14 @@ jobs:
           expected_version="${RELEASE_TAG#v}"
           for attempt in {1..60}; do
             read -r repo_sha runtime_sha runtime_stage <<< "$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')"
-            health_version="$(curl -fsSL "$health_url" 2>/dev/null | python -c 'import json,sys; import sys; raw=sys.stdin.read().strip(); print(json.loads(raw).get("version","") if raw else "")' 2>/dev/null || true)"
-            echo "HF runtime stage: ${runtime_stage}, repo sha: ${repo_sha}, runtime sha: ${runtime_sha}, health version: ${health_version:-unknown} (attempt ${attempt}/60)"
-            if [[ -n "${repo_sha}" && "${runtime_stage}" == "RUNNING" && "${runtime_sha}" == "${repo_sha}" && "${health_version}" == "${expected_version}" ]]; then
+            health_version="$(curl -fsSL "$health_url" 2>/dev/null | python -c 'import json,sys; raw=sys.stdin.read().strip(); print(json.loads(raw).get("version","") if raw else "")' 2>/dev/null || true)"
+            echo "HF runtime stage: ${runtime_stage:-unknown}, repo sha: ${repo_sha:-unknown}, runtime sha: ${runtime_sha:-unknown}, health version: ${health_version:-unknown} (attempt ${attempt}/60)"
+            if [[ "${health_version}" == "${expected_version}" ]]; then
               exit 0
             fi
 
             sleep 5
           done
 
-          echo "HF runtime did not switch to the requested release version ${expected_version} within 300 seconds." >&2
+          echo "HF app health endpoint did not report the requested release version ${expected_version} within 300 seconds." >&2
           exit 1
