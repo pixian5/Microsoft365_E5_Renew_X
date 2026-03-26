@@ -33,6 +33,7 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
     private static readonly HashSet<string> UnsupportedApiIds =
     [
         "AgreementAcceptances.Get",
+        "DeviceAppManagement.MobileApps.GraphWindowsUniversalAppX.Count.Get",
         "DeviceManagement.ManagedDevices.Count.Get",
         "DeviceManagement.NotificationMessageTemplates.Count.Get",
         "DeviceManagement.UserExperienceAnalyticsCategories.Get",
@@ -45,8 +46,13 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
         "PermissionGrants.Get",
         "RoleManagement.EntitlementManagement.Get",
         "RoleManagement.EntitlementManagement.ResourceNamespaces.Get",
+        "RoleManagement.Get",
+        "RoleManagement.Directory.RoleDefinitions.Count.Get",
+        "RoleManagement.Directory.RoleEligibilityScheduleInstances.Count.Get",
+        "RoleManagement.Directory.RoleEligibilitySchedules.Count.Get",
         "ScopedRoleMemberships.Count.Get",
         "ScopedRoleMemberships.Get",
+        "Shares.Count.Get",
     ];
 
     private readonly ILogger<RandomGraphAPICaller> logger;
@@ -160,11 +166,15 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
     {
         return result.Contains("|NoMethodMatchRouteTemplate", StringComparison.Ordinal)
             || result.Contains("|UnsupportedCountRoute", StringComparison.Ordinal)
+            || result.Contains("|UnsupportedEntityCount", StringComparison.Ordinal)
             || result.Contains("|DirectQueriesNotSupported", StringComparison.Ordinal)
             || result.Contains("|DifferentialQueryNotSupported", StringComparison.Ordinal)
             || result.Contains("|ChangeTrackingNotSupported", StringComparison.Ordinal)
             || result.Contains("|SearchNotSupported", StringComparison.Ordinal)
             || result.Contains("|ProviderNotSupported", StringComparison.Ordinal)
+            || result.Contains("|MalformedResourceIdentifier", StringComparison.Ordinal)
+            || result.Contains("|InvalidRequestUrl", StringComparison.Ordinal)
+            || result.Contains("|MissingResourcePath", StringComparison.Ordinal)
             || result.Contains("|RequestPathNotSupported", StringComparison.Ordinal)
             || result.Contains("|LegacyCpimEndpoint", StringComparison.Ordinal)
             || result.Contains("|LegacySyncfabricEndpoint", StringComparison.Ordinal)
