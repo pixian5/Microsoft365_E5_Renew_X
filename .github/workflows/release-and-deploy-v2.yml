@@ -32,11 +32,44 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Bump Version For Push
+        if: github.event_name == 'push'
+        id: bump
+        run: |
+          version_file="workspace/research/E5Renewer.Net/Directory.Build.props"
+          current_version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$version_file" | head -n 1)"
+          if [[ -z "${current_version}" ]]; then
+            echo "Failed to resolve version from Directory.Build.props" >&2
+            exit 1
+          fi
+
+          IFS='.' read -r major minor patch build <<< "${current_version}"
+          if [[ -z "${major}" || -z "${minor}" || -z "${patch}" || -z "${build}" ]]; then
+            echo "Version must use four numeric parts, got: ${current_version}" >&2
+            exit 1
+          fi
+
+          next_build=$((build + 1))
+          next_version="${major}.${minor}.${patch}.${next_build}"
+
+          sed -i "s#<Version>${current_version}</Version>#<Version>${next_version}</Version>#" "$version_file"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$version_file"
+          git commit -m "自动递增版本号到 ${next_version}"
+          git push origin HEAD:main
+
+          echo "version=${next_version}" >> "${GITHUB_OUTPUT}"
+          echo "release_tag=v${next_version}" >> "${GITHUB_OUTPUT}"
+
       - name: Resolve Release Tag
         id: vars
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             release_tag="${{ inputs.release_tag }}"
+          elif [[ -n "${{ steps.bump.outputs.release_tag }}" ]]; then
+            release_tag="${{ steps.bump.outputs.release_tag }}"
           else
             version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' workspace/research/E5Renewer.Net/Directory.Build.props | head -n 1)"
             if [[ -z "${version}" ]]; then
@@ -53,7 +86,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f "${{ steps.vars.outputs.release_tag }}" "${GITHUB_SHA}"
+          target_sha="$(git rev-parse HEAD)"
+          git tag -f "${{ steps.vars.outputs.release_tag }}" "${target_sha}"
           git push origin "refs/tags/${{ steps.vars.outputs.release_tag }}" --force
 
       - name: Setup .NET
