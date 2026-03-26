@@ -61,7 +61,19 @@ app.UseExceptionHandler(exceptionHandler =>
     });
 });
 
-app.MapGet("/", () => Results.Content(RenderHome(options), "text/html; charset=utf-8"));
+app.MapMethods("/", ["GET", "HEAD"], (HttpContext context) =>
+{
+    context.Response.Headers.CacheControl = "no-store";
+    context.Response.Headers["X-App-Endpoint"] = "home";
+
+    if (HttpMethods.IsHead(context.Request.Method))
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        return Results.Ok();
+    }
+
+    return Results.Content(RenderHome(options), "text/html; charset=utf-8");
+});
 
 app.MapMethods("/favicon.ico", ["GET", "HEAD"], () =>
 {
@@ -277,7 +289,21 @@ app.MapGet("/dashboard/history", (RuntimeHistoryService historyService, string? 
     });
 });
 
-app.MapGet("/healthz", async (RuntimeHistoryService historyService, ISecretProvider secretProvider, IStatusManager statusManager) =>
+app.MapMethods("/readyz", ["GET", "HEAD"], (HttpContext context) =>
+{
+    context.Response.Headers.CacheControl = "no-store";
+    context.Response.Headers["X-App-Endpoint"] = "readyz";
+
+    if (HttpMethods.IsHead(context.Request.Method))
+    {
+        context.Response.ContentType = "text/plain; charset=utf-8";
+        return Results.Ok();
+    }
+
+    return Results.Text("ok", "text/plain; charset=utf-8");
+});
+
+app.MapMethods("/healthz", ["GET", "HEAD"], async (HttpContext context, RuntimeHistoryService historyService, ISecretProvider secretProvider, IStatusManager statusManager) =>
 {
     var runtimeHealth = historyService.EvaluateHealth(TimeSpan.FromMinutes(5));
     var secret = await secretProvider.GetUserSecretAsync();
@@ -298,11 +324,28 @@ app.MapGet("/healthz", async (RuntimeHistoryService historyService, ISecretProvi
             runtimeHealth.FailureCount);
     }
 
+    var version = e5Assembly.GetName().Version?.ToString() ?? "unknown";
+    context.Response.Headers.CacheControl = "no-store";
+    context.Response.Headers["X-App-Endpoint"] = "healthz";
+    context.Response.Headers["X-App-Version"] = version;
+    context.Response.Headers["X-Runtime-Health"] = runtimeHealth.Status switch
+    {
+        "正常" => "healthy",
+        "警告" => "warning",
+        _ => "error"
+    };
+
+    if (HttpMethods.IsHead(context.Request.Method))
+    {
+        context.Response.ContentType = "application/json; charset=utf-8";
+        return Results.Ok();
+    }
+
     return Results.Json(new
     {
         status = "ok",
         name = options.Runtime.DashboardTitle,
-        version = e5Assembly.GetName().Version?.ToString() ?? "unknown",
+        version,
         runtime_status = runtimeHealth.Status,
         runtime_message = runtimeHealth.Message,
         recent_success_count = runtimeHealth.SuccessCount,
