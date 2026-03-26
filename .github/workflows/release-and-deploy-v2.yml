@@ -91,6 +91,33 @@ jobs:
             workspace/build/artifacts/Microsoft365_E5_Renew_X-latest.tar.gz
             workspace/build/artifacts/release-version.txt
 
+      - name: Wait For Release Assets To Be Reachable
+        if: github.event_name == 'push' || inputs.deploy_hf
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.vars.outputs.release_tag }}
+        run: |
+          release_tag="${RELEASE_TAG}"
+          expected_version="${release_tag#v}"
+          bundle_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${release_tag}/Microsoft365_E5_Renew_X-${release_tag}.tar.gz"
+          version_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${release_tag}/release-version.txt"
+
+          for attempt in {1..60}; do
+            if curl -fsSIL "$bundle_url" >/dev/null 2>&1; then
+              actual_version="$(curl -fsSL "$version_url" 2>/dev/null | tr -d '\r\n' || true)"
+              if [[ "$actual_version" == "$expected_version" ]]; then
+                echo "Release assets are ready. bundle_url=$bundle_url version=$actual_version (attempt ${attempt}/60)"
+                exit 0
+              fi
+            fi
+
+            echo "Release assets are not reachable yet, retrying... (attempt ${attempt}/60)"
+            sleep 5
+          done
+
+          echo "Release assets for ${release_tag} were not reachable within 300 seconds." >&2
+          exit 1
+
       - name: Setup Python For Hugging Face
         if: github.event_name == 'push' || inputs.deploy_hf
         uses: actions/setup-python@v5
@@ -159,57 +186,57 @@ jobs:
           chmod +x workspace/scripts/*.sh
           workspace/scripts/sync-hf-space.sh
 
-      - name: Request Hugging Face Runtime Restart
-        if: github.event_name == 'push' || inputs.deploy_hf
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
-        run: |
-          if [[ -z "${HF_TOKEN:-}" || -z "${HF_SPACE_ID:-}" ]]; then
-            echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping HF runtime restart."
-            exit 0
-          fi
-
-          curl -fsSL -X POST \
-            -H "Authorization: Bearer ${HF_TOKEN}" \
-            "https://huggingface.co/api/spaces/${HF_SPACE_ID}/restart" \
-            | python -c 'import json,sys; data=json.load(sys.stdin); print("Requested HF restart. stage=%s runtime_sha=%s" % (data.get("stage", "unknown"), data.get("sha", "unknown")))'
-
       - name: Wait For Hugging Face Runtime Update
         if: github.event_name == 'push' || inputs.deploy_hf
         env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
           RELEASE_TAG: ${{ steps.vars.outputs.release_tag }}
         run: |
-          if [[ -z "${HF_SPACE_ID:-}" || -z "${HF_TOKEN:-}" ]]; then
-            echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping HF runtime polling."
+          if [[ -z "${HF_SPACE_ID:-}" ]]; then
+            echo "HF_SPACE_ID is not configured, skipping HF runtime polling."
             exit 0
           fi
 
           space_api_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}"
           health_url="https://${HF_SPACE_ID//\//-}.hf.space/healthz"
           expected_version="${RELEASE_TAG#v}"
-          repair_attempted=0
-          for attempt in {1..180}; do
+          for attempt in {1..120}; do
             read -r repo_sha runtime_sha runtime_stage <<< "$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')"
             health_version="$(curl -fsSL "$health_url" 2>/dev/null | python -c 'import json,sys; raw=sys.stdin.read().strip(); print(json.loads(raw).get("version","") if raw else "")' 2>/dev/null || true)"
-            echo "HF runtime stage: ${runtime_stage:-unknown}, repo sha: ${repo_sha:-unknown}, runtime sha: ${runtime_sha:-unknown}, health version: ${health_version:-unknown} (attempt ${attempt}/180)"
+            echo "HF runtime stage: ${runtime_stage:-unknown}, repo sha: ${repo_sha:-unknown}, runtime sha: ${runtime_sha:-unknown}, health version: ${health_version:-unknown} (attempt ${attempt}/120)"
             if [[ "${health_version}" == "${expected_version}" ]]; then
               exit 0
-            fi
-
-            if [[ "$repair_attempted" -eq 0 && "$attempt" -ge 24 && ( "${runtime_stage:-}" == "RUNNING_BUILDING" || "${runtime_sha:-}" != "${repo_sha:-}" ) ]]; then
-              echo "HF runtime is still behind after $((attempt * 5)) seconds, requesting one factory reboot."
-              curl -fsSL -X POST \
-                -H "Authorization: Bearer ${HF_TOKEN}" \
-                "https://huggingface.co/api/spaces/${HF_SPACE_ID}/restart?factory=true" \
-                | python -c 'import json,sys; data=json.load(sys.stdin); print("Requested HF factory reboot. stage=%s runtime_sha=%s" % (data.get("stage", "unknown"), data.get("sha", "unknown")))'
-              repair_attempted=1
             fi
 
             sleep 5
           done
 
-          echo "HF app health endpoint did not report the requested release version ${expected_version} within 900 seconds." >&2
+          echo "HF app health endpoint did not report the requested release version ${expected_version} within 600 seconds." >&2
           exit 1
+
+      - name: Dump Hugging Face Runtime Logs On Failure
+        if: failure() && (github.event_name == 'push' || inputs.deploy_hf)
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
+        run: |
+          if [[ -z "${HF_TOKEN:-}" || -z "${HF_SPACE_ID:-}" ]]; then
+            echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping HF failure logs dump."
+            exit 0
+          fi
+
+          echo "===== HF runtime ====="
+          curl -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/runtime" || true
+          echo
+
+          echo "===== HF healthz ====="
+          curl -fsSL "https://${HF_SPACE_ID//\//-}.hf.space/healthz" || true
+          echo
+
+          echo "===== HF build logs ====="
+          timeout 20s curl -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/logs/build" | sed -n '1,240p' || true
+          echo
+
+          echo "===== HF run logs ====="
+          timeout 20s curl -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/logs/run" | sed -n '1,240p' || true
+          echo
