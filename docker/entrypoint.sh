@@ -7,6 +7,7 @@ DEPLOY_DIR="$APP_ROOT/Deploy"
 BUNDLE_URL="${RELEASE_BUNDLE_URL:-}"
 RELEASE_VERSION="${RELEASE_VERSION:-}"
 RELEASE_VERSION_URL="${RELEASE_VERSION_URL:-}"
+RELEASE_POLL_INTERVAL_SECONDS="${RELEASE_POLL_INTERVAL_SECONDS:-10}"
 BUNDLE_MARKER="$APP_ROOT/runtime/release-bundle-url.txt"
 VERSION_MARKER="$APP_ROOT/runtime/release-version.txt"
 STARTUP_LOG="$APP_ROOT/runtime/history/startup.log"
@@ -25,24 +26,34 @@ current_bundle_version() {
   fi
 }
 
+resolve_target_version() {
+  if [ -n "$RELEASE_VERSION" ]; then
+    printf '%s' "$RELEASE_VERSION"
+    return 0
+  fi
+
+  if [ -z "$RELEASE_VERSION_URL" ]; then
+    return 1
+  fi
+
+  target_version="$(curl -fsSL "$RELEASE_VERSION_URL" | tr -d '\r\n')"
+  if [ -z "$target_version" ]; then
+    return 1
+  fi
+
+  printf '%s' "$target_version"
+}
+
 ensure_release_bundle() {
   if [ -z "$BUNDLE_URL" ]; then
     echo "RELEASE_BUNDLE_URL is not set." >&2
     exit 1
   fi
 
-  target_version="$RELEASE_VERSION"
+  target_version="$(resolve_target_version)"
   if [ -z "$target_version" ]; then
-    if [ -z "$RELEASE_VERSION_URL" ]; then
-      echo "RELEASE_VERSION and RELEASE_VERSION_URL are both not set." >&2
-      exit 1
-    fi
-
-    target_version="$(curl -fsSL "$RELEASE_VERSION_URL" | tr -d '\r\n')"
-    if [ -z "$target_version" ]; then
-      echo "Failed to resolve target version from RELEASE_VERSION_URL." >&2
-      exit 1
-    fi
+    echo "Failed to resolve target version." >&2
+    exit 1
   fi
 
   current_marker=""
@@ -118,23 +129,100 @@ export HOST="${HOST:-0.0.0.0}"
 export ASPNETCORE_URLS="${ASPNETCORE_URLS:-http://${HOST}:${PORT}}"
 export DOTNET_RUNNING_IN_CONTAINER="${DOTNET_RUNNING_IN_CONTAINER:-true}"
 RESTART_FLAG="$APP_ROOT/runtime/restart.requested"
+APP_PID=""
+
+start_app() {
+  log "启动应用进程，版本 $(current_bundle_version)。"
+  "$CURRENT_ROOT/Microsoft365_E5_Renew_X" &
+  APP_PID=$!
+  log "应用进程已启动，pid=$APP_PID。"
+}
+
+stop_app() {
+  reason="$1"
+  if [ -z "${APP_PID:-}" ]; then
+    return
+  fi
+
+  if ! kill -0 "$APP_PID" 2>/dev/null; then
+    wait "$APP_PID" 2>/dev/null || true
+    APP_PID=""
+    return
+  fi
+
+  log "准备停止应用进程，原因=$reason，pid=$APP_PID。"
+  kill "$APP_PID" 2>/dev/null || true
+
+  waited=0
+  while kill -0 "$APP_PID" 2>/dev/null; do
+    waited=$((waited + 1))
+    if [ "$waited" -ge 30 ]; then
+      log "应用进程在 30 秒内未退出，执行强制终止。pid=$APP_PID。"
+      kill -9 "$APP_PID" 2>/dev/null || true
+      break
+    fi
+
+    sleep 1
+  done
+
+  wait "$APP_PID" 2>/dev/null || true
+  APP_PID=""
+}
+
+child_exit_code() {
+  if [ -z "${APP_PID:-}" ]; then
+    printf '0'
+    return
+  fi
+
+  if wait "$APP_PID"; then
+    printf '0'
+  else
+    printf '%s' "$?"
+  fi
+}
 
 ensure_release_bundle
+start_app
 
 while true; do
-  rm -f "$RESTART_FLAG"
-  log "启动应用进程，版本 $(current_bundle_version)。"
-  "$CURRENT_ROOT/Microsoft365_E5_Renew_X"
-  exit_code=$?
-  log "应用进程退出，exit_code=$exit_code。"
+  reload_reason=""
 
   if [ -f "$RESTART_FLAG" ]; then
     rm -f "$RESTART_FLAG"
-    log "检测到重启请求，重新检查发布包。"
+    reload_reason="manual-restart"
+  else
+    target_version="$(resolve_target_version 2>/dev/null || true)"
+    current_version="$(current_bundle_version)"
+    if [ -n "$target_version" ] && [ -n "$current_version" ] && [ "$target_version" != "$current_version" ]; then
+      reload_reason="release-update:$current_version->$target_version"
+    fi
+  fi
+
+  if [ -n "$reload_reason" ]; then
+    stop_app "$reload_reason"
     ensure_release_bundle
+    start_app
     sleep 1
     continue
   fi
 
-  exit "$exit_code"
+  if ! kill -0 "$APP_PID" 2>/dev/null; then
+    exit_code="$(child_exit_code)"
+    log "应用进程退出，exit_code=$exit_code。"
+
+    target_version="$(resolve_target_version 2>/dev/null || true)"
+    current_version="$(current_bundle_version)"
+    if [ -n "$target_version" ] && [ -n "$current_version" ] && [ "$target_version" != "$current_version" ]; then
+      log "检测到进程退出后有新版本可用，准备拉取。target_version=$target_version current_version=$current_version"
+      ensure_release_bundle
+      start_app
+      sleep 1
+      continue
+    fi
+
+    exit "$exit_code"
+  fi
+
+  sleep "$RELEASE_POLL_INTERVAL_SECONDS"
 done

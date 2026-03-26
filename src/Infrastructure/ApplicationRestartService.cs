@@ -59,13 +59,7 @@ public sealed class ApplicationRestartService
             Directory.CreateDirectory(Path.GetDirectoryName(restartSignalPath)!);
             File.WriteAllText(restartSignalPath, DateTimeOffset.Now.ToString("O"), new UTF8Encoding(false));
             AppendRestartLog($"已写入容器重启标记：{restartSignalPath}");
-
-            _ = Task.Run(async () =>
-            {
-                await Task.Delay(500);
-                this.applicationLifetime.StopApplication();
-            });
-
+            AppendRestartLog("容器模式下由入口脚本负责终止旧进程并拉取新包，本进程不再主动调用 StopApplication。");
             return RestartRequestResult.SuccessResult("supervisor-flag", "已提交给容器入口脚本重启。");
         }
         catch (Exception ex)
