@@ -27,6 +27,7 @@ jobs:
   release:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -101,17 +102,21 @@ jobs:
           expected_version="${release_tag#v}"
           bundle_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${release_tag}/Microsoft365_E5_Renew_X-${release_tag}.tar.gz"
           version_url="https://github.com/${GITHUB_REPOSITORY}/releases/download/${release_tag}/release-version.txt"
+          curl_args=(--connect-timeout 10 --max-time 20 --retry 2 --retry-delay 2)
+          deadline=$((SECONDS + 300))
+          attempt=0
 
-          for attempt in {1..60}; do
-            if curl -fsSIL "$bundle_url" >/dev/null 2>&1; then
-              actual_version="$(curl -fsSL "$version_url" 2>/dev/null | tr -d '\r\n' || true)"
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
+            if curl "${curl_args[@]}" -fsSIL "$bundle_url" >/dev/null 2>&1; then
+              actual_version="$(curl "${curl_args[@]}" -fsSL "$version_url" 2>/dev/null | tr -d '\r\n' || true)"
               if [[ "$actual_version" == "$expected_version" ]]; then
-                echo "Release assets are ready. bundle_url=$bundle_url version=$actual_version (attempt ${attempt}/60)"
+                echo "Release assets are ready. bundle_url=$bundle_url version=$actual_version (attempt ${attempt})"
                 exit 0
               fi
             fi
 
-            echo "Release assets are not reachable yet, retrying... (attempt ${attempt}/60)"
+            echo "Release assets are not reachable yet, retrying... (attempt ${attempt})"
             sleep 5
           done
 
@@ -201,22 +206,77 @@ jobs:
           space_api_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}"
           health_url="https://${HF_SPACE_ID//\//-}.hf.space/healthz"
           expected_version="${RELEASE_TAG#v}"
-          repair_attempted=0
-          for attempt in {1..180}; do
-            read -r repo_sha runtime_sha runtime_stage <<< "$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')"
-            health_version="$(curl -fsSL "$health_url" 2>/dev/null | python -c 'import json,sys; raw=sys.stdin.read().strip(); print(json.loads(raw).get("version","") if raw else "")' 2>/dev/null || true)"
-            echo "HF runtime stage: ${runtime_stage:-unknown}, repo sha: ${repo_sha:-unknown}, runtime sha: ${runtime_sha:-unknown}, health version: ${health_version:-unknown} (attempt ${attempt}/180)"
+          curl_args=(--connect-timeout 5 --max-time 10)
+          soft_restart_attempted=0
+          factory_reboot_attempted=0
+          final_factory_reboot_attempted=0
+          deadline=$((SECONDS + 900))
+          attempt=0
+
+          fetch_runtime_state() {
+            local raw
+            raw="$(curl "${curl_args[@]}" -fsSL "$space_api_url" 2>/dev/null || true)"
+            if [[ -z "$raw" ]]; then
+              printf 'unknown unknown unknown'
+              return 0
+            fi
+
+            printf '%s' "$raw" | python -c 'import json,sys; data=json.load(sys.stdin); runtime=data.get("runtime", {}); print(data.get("sha",""), runtime.get("sha",""), runtime.get("stage",""))'
+          }
+
+          fetch_health_version() {
+            local raw
+            raw="$(curl "${curl_args[@]}" -fsSL "$health_url" 2>/dev/null || true)"
+            if [[ -z "$raw" ]]; then
+              return 0
+            fi
+
+            printf '%s' "$raw" | python -c 'import json,sys; raw=sys.stdin.read().strip(); print(json.loads(raw).get("version","") if raw else "")' 2>/dev/null || true
+          }
+
+          request_space_restart() {
+            local factory="${1:-false}"
+            local restart_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}/restart"
+            local label="restart"
+            if [[ "$factory" == "true" ]]; then
+              restart_url+="?factory=true"
+              label="factory reboot"
+            fi
+
+            local response
+            response="$(curl "${curl_args[@]}" -fsSL -X POST -H "Authorization: Bearer ${HF_TOKEN}" "$restart_url" 2>/dev/null || true)"
+            if [[ -n "$response" ]]; then
+              printf '%s' "$response" | python -c "import json,sys; data=json.load(sys.stdin); print('Requested ${label}. stage=%s runtime_sha=%s' % (data.get('stage', 'unknown'), data.get('sha', 'unknown')))"
+            else
+              echo "Failed to request HF ${label}; the API did not return a response."
+            fi
+          }
+
+          while (( SECONDS < deadline )); do
+            attempt=$((attempt + 1))
+            read -r repo_sha runtime_sha runtime_stage <<< "$(fetch_runtime_state)"
+            health_version="$(fetch_health_version)"
+            echo "HF runtime stage: ${runtime_stage:-unknown}, repo sha: ${repo_sha:-unknown}, runtime sha: ${runtime_sha:-unknown}, health version: ${health_version:-unknown} (attempt ${attempt}, elapsed ${SECONDS}s)"
             if [[ "${health_version}" == "${expected_version}" ]]; then
               exit 0
             fi
 
-            if [[ "$repair_attempted" -eq 0 && "$attempt" -ge 48 ]]; then
-              echo "HF runtime is still not serving ${expected_version} after $((attempt * 5)) seconds. Requesting one factory reboot."
-              curl -fsSL -X POST \
-                -H "Authorization: Bearer ${HF_TOKEN}" \
-                "https://huggingface.co/api/spaces/${HF_SPACE_ID}/restart?factory=true" \
-                | python -c 'import json,sys; data=json.load(sys.stdin); print("Requested HF factory reboot. stage=%s runtime_sha=%s" % (data.get("stage", "unknown"), data.get("sha", "unknown")))'
-              repair_attempted=1
+            if [[ "$soft_restart_attempted" -eq 0 && "$SECONDS" -ge 120 ]]; then
+              echo "HF runtime is still not serving ${expected_version} after ${SECONDS} seconds. Requesting one regular restart."
+              request_space_restart false
+              soft_restart_attempted=1
+            fi
+
+            if [[ "$factory_reboot_attempted" -eq 0 && "$SECONDS" -ge 240 ]]; then
+              echo "HF runtime is still not serving ${expected_version} after ${SECONDS} seconds. Requesting one factory reboot."
+              request_space_restart true
+              factory_reboot_attempted=1
+            fi
+
+            if [[ "$final_factory_reboot_attempted" -eq 0 && "$SECONDS" -ge 480 ]]; then
+              echo "HF runtime is still not serving ${expected_version} after ${SECONDS} seconds. Requesting one final factory reboot."
+              request_space_restart true
+              final_factory_reboot_attempted=1
             fi
 
             sleep 5
@@ -236,18 +296,20 @@ jobs:
             exit 0
           fi
 
+          curl_args=(--connect-timeout 10 --max-time 20 --retry 1 --retry-delay 2)
+
           echo "===== HF runtime ====="
-          curl -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/runtime" || true
+          curl "${curl_args[@]}" -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/runtime" || true
           echo
 
           echo "===== HF healthz ====="
-          curl -fsSL "https://${HF_SPACE_ID//\//-}.hf.space/healthz" || true
+          curl "${curl_args[@]}" -fsSL "https://${HF_SPACE_ID//\//-}.hf.space/healthz" || true
           echo
 
           echo "===== HF build logs ====="
-          timeout 20s curl -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/logs/build" | sed -n '1,240p' || true
+          curl "${curl_args[@]}" -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/logs/build" | sed -n '1,240p' || true
           echo
 
           echo "===== HF run logs ====="
-          timeout 20s curl -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/logs/run" | sed -n '1,240p' || true
+          curl "${curl_args[@]}" -fsSL -H "Authorization: Bearer ${HF_TOKEN}" "https://huggingface.co/api/spaces/${HF_SPACE_ID}/logs/run" | sed -n '1,240p' || true
           echo
