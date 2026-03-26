@@ -107,8 +107,12 @@ jobs:
 
       - name: Archive Publish Bundle
         run: |
+          release_tag="${{ steps.vars.outputs.release_tag }}"
+          release_version="${release_tag#v}"
           mkdir -p workspace/build/artifacts
-          tar -C workspace/build/publish -czf "workspace/build/artifacts/Microsoft365_E5_Renew_X-${{ steps.vars.outputs.release_tag }}.tar.gz" .
+          tar -C workspace/build/publish -czf "workspace/build/artifacts/Microsoft365_E5_Renew_X-${release_tag}.tar.gz" .
+          cp "workspace/build/artifacts/Microsoft365_E5_Renew_X-${release_tag}.tar.gz" "workspace/build/artifacts/Microsoft365_E5_Renew_X-latest.tar.gz"
+          printf '%s\n' "${release_version}" > "workspace/build/artifacts/release-version.txt"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -117,6 +121,8 @@ jobs:
           generate_release_notes: true
           files: |
             workspace/build/artifacts/Microsoft365_E5_Renew_X-${{ steps.vars.outputs.release_tag }}.tar.gz
+            workspace/build/artifacts/Microsoft365_E5_Renew_X-latest.tar.gz
+            workspace/build/artifacts/release-version.txt
 
       - name: Setup Python For Hugging Face
         if: github.event_name == 'push' || inputs.deploy_hf
@@ -184,6 +190,19 @@ jobs:
 
           chmod +x workspace/scripts/*.sh
           workspace/scripts/sync-hf-space.sh
+
+      - name: Trigger Hugging Face App Restart
+        if: github.event_name == 'push' || inputs.deploy_hf
+        env:
+          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
+        run: |
+          if [[ -z "${HF_SPACE_ID:-}" ]]; then
+            echo "HF_SPACE_ID is not configured, skipping HF app restart trigger."
+            exit 0
+          fi
+
+          restart_url="https://${HF_SPACE_ID//\//-}.hf.space/dashboard/restart"
+          curl -fsS -X POST "$restart_url"
 
       - name: Wait For Hugging Face Runtime Update
         if: github.event_name == 'push' || inputs.deploy_hf

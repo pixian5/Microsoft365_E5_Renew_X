@@ -6,6 +6,7 @@ CURRENT_ROOT="$APP_ROOT/current"
 DEPLOY_DIR="$APP_ROOT/Deploy"
 BUNDLE_URL="${RELEASE_BUNDLE_URL:-}"
 RELEASE_VERSION="${RELEASE_VERSION:-}"
+RELEASE_VERSION_URL="${RELEASE_VERSION_URL:-}"
 BUNDLE_MARKER="$APP_ROOT/runtime/release-bundle-url.txt"
 VERSION_MARKER="$APP_ROOT/runtime/release-version.txt"
 STARTUP_LOG="$APP_ROOT/runtime/history/startup.log"
@@ -30,9 +31,18 @@ ensure_release_bundle() {
     exit 1
   fi
 
-  if [ -z "$RELEASE_VERSION" ]; then
-    echo "RELEASE_VERSION is not set." >&2
-    exit 1
+  target_version="$RELEASE_VERSION"
+  if [ -z "$target_version" ]; then
+    if [ -z "$RELEASE_VERSION_URL" ]; then
+      echo "RELEASE_VERSION and RELEASE_VERSION_URL are both not set." >&2
+      exit 1
+    fi
+
+    target_version="$(curl -fsSL "$RELEASE_VERSION_URL" | tr -d '\r\n')"
+    if [ -z "$target_version" ]; then
+      echo "Failed to resolve target version from RELEASE_VERSION_URL." >&2
+      exit 1
+    fi
   fi
 
   current_marker=""
@@ -45,13 +55,13 @@ ensure_release_bundle() {
     current_version_marker="$(cat "$VERSION_MARKER")"
   fi
 
-  log "检查发布包。target_version=$RELEASE_VERSION target_url=$BUNDLE_URL current_version=${current_bundle_version_value:-missing} current_version_marker=${current_version_marker:-missing}"
+  log "检查发布包。target_version=$target_version target_url=$BUNDLE_URL current_version=${current_bundle_version_value:-missing} current_version_marker=${current_version_marker:-missing}"
 
   if [ "$current_marker" = "$BUNDLE_URL" ] \
-    && [ "$current_version_marker" = "$RELEASE_VERSION" ] \
-    && [ "$current_bundle_version_value" = "$RELEASE_VERSION" ] \
+    && [ "$current_version_marker" = "$target_version" ] \
+    && [ "$current_bundle_version_value" = "$target_version" ] \
     && [ -x "$CURRENT_ROOT/Microsoft365_E5_Renew_X" ]; then
-    log "命中当前发布包缓存，继续使用现有版本 $RELEASE_VERSION。"
+    log "命中当前发布包缓存，继续使用现有版本 $target_version。"
     return
   fi
 
@@ -68,8 +78,8 @@ ensure_release_bundle() {
     extracted_version="$(tr -d '\r\n' < "$temp_dir/release-version.txt")"
   fi
 
-  if [ "$extracted_version" != "$RELEASE_VERSION" ]; then
-    log "下载到的发布包版本不匹配。expected=$RELEASE_VERSION actual=${extracted_version:-missing}"
+  if [ "$extracted_version" != "$target_version" ]; then
+    log "下载到的发布包版本不匹配。expected=$target_version actual=${extracted_version:-missing}"
     exit 1
   fi
 
@@ -80,8 +90,8 @@ ensure_release_bundle() {
   ln -s "$DEPLOY_DIR" "$CURRENT_ROOT/Deploy"
   ln -s "$APP_ROOT/runtime" "$CURRENT_ROOT/runtime"
   printf '%s' "$BUNDLE_URL" > "$BUNDLE_MARKER"
-  printf '%s' "$RELEASE_VERSION" > "$VERSION_MARKER"
-  log "发布包已切换到版本 $RELEASE_VERSION。"
+  printf '%s' "$target_version" > "$VERSION_MARKER"
+  log "发布包已切换到版本 $target_version。"
 
   rm -rf "$temp_dir"
   trap - EXIT INT TERM
