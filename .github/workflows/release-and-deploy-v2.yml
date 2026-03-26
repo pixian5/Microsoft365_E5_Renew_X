@@ -189,29 +189,40 @@ jobs:
       - name: Wait For Hugging Face Runtime Update
         if: github.event_name == 'push' || inputs.deploy_hf
         env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
           RELEASE_TAG: ${{ steps.vars.outputs.release_tag }}
         run: |
-          if [[ -z "${HF_SPACE_ID:-}" ]]; then
-            echo "HF_SPACE_ID is not configured, skipping HF runtime polling."
+          if [[ -z "${HF_SPACE_ID:-}" || -z "${HF_TOKEN:-}" ]]; then
+            echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping HF runtime polling."
             exit 0
           fi
 
           space_api_url="https://huggingface.co/api/spaces/${HF_SPACE_ID}"
           health_url="https://${HF_SPACE_ID//\//-}.hf.space/healthz"
           expected_version="${RELEASE_TAG#v}"
-          for attempt in {1..120}; do
+          repair_attempted=0
+          for attempt in {1..180}; do
             read -r repo_sha runtime_sha runtime_stage <<< "$(curl -fsSL "$space_api_url" | python -c 'import json,sys; data=json.load(sys.stdin); print(data.get("sha",""), data.get("runtime",{}).get("sha",""), data.get("runtime",{}).get("stage",""))')"
             health_version="$(curl -fsSL "$health_url" 2>/dev/null | python -c 'import json,sys; raw=sys.stdin.read().strip(); print(json.loads(raw).get("version","") if raw else "")' 2>/dev/null || true)"
-            echo "HF runtime stage: ${runtime_stage:-unknown}, repo sha: ${repo_sha:-unknown}, runtime sha: ${runtime_sha:-unknown}, health version: ${health_version:-unknown} (attempt ${attempt}/120)"
+            echo "HF runtime stage: ${runtime_stage:-unknown}, repo sha: ${repo_sha:-unknown}, runtime sha: ${runtime_sha:-unknown}, health version: ${health_version:-unknown} (attempt ${attempt}/180)"
             if [[ "${health_version}" == "${expected_version}" ]]; then
               exit 0
+            fi
+
+            if [[ "$repair_attempted" -eq 0 && "$attempt" -ge 48 ]]; then
+              echo "HF runtime is still not serving ${expected_version} after $((attempt * 5)) seconds. Requesting one factory reboot."
+              curl -fsSL -X POST \
+                -H "Authorization: Bearer ${HF_TOKEN}" \
+                "https://huggingface.co/api/spaces/${HF_SPACE_ID}/restart?factory=true" \
+                | python -c 'import json,sys; data=json.load(sys.stdin); print("Requested HF factory reboot. stage=%s runtime_sha=%s" % (data.get("stage", "unknown"), data.get("sha", "unknown")))'
+              repair_attempted=1
             fi
 
             sleep 5
           done
 
-          echo "HF app health endpoint did not report the requested release version ${expected_version} within 600 seconds." >&2
+          echo "HF app health endpoint did not report the requested release version ${expected_version} within 900 seconds." >&2
           exit 1
 
       - name: Dump Hugging Face Runtime Logs On Failure
