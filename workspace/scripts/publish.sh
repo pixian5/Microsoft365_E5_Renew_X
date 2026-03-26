@@ -64,8 +64,8 @@ cp "$ROOT/workspace/scripts/stop-background.ps1" "$OUT_DIR/stop-background.ps1"
 cp "$ROOT/workspace/scripts/status.ps1" "$OUT_DIR/status.ps1"
 
 cat > "$OUT_DIR/Microsoft365_E5_Renew_X" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 APP="$ROOT/app/Microsoft365_E5_Renew_X"
