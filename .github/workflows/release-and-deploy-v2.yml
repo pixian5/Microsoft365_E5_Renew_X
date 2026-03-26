@@ -184,31 +184,6 @@ jobs:
           chmod +x workspace/scripts/*.sh
           workspace/scripts/sync-hf-space.sh
 
-      - name: Restart Hugging Face Space
-        if: github.event_name == 'push' || inputs.deploy_hf
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE_ID: ${{ secrets.HF_SPACE_ID }}
-        run: |
-          if [[ -z "${HF_TOKEN:-}" || -z "${HF_SPACE_ID:-}" ]]; then
-            echo "HF_TOKEN or HF_SPACE_ID is not configured, skipping HF restart."
-            exit 0
-          fi
-
-          python <<'PY'
-          import os
-          from huggingface_hub import HfApi
-
-          token = os.environ.get("HF_TOKEN", "").strip()
-          repo_id = os.environ.get("HF_SPACE_ID", "").strip()
-          if not token or not repo_id:
-              raise SystemExit(0)
-
-          api = HfApi(token=token)
-          api.restart_space(repo_id=repo_id, factory_reboot=True)
-          print(f"Triggered Hugging Face Space factory reboot for {repo_id}")
-          PY
-
       - name: Wait For Hugging Face Runtime Update
         if: github.event_name == 'push' || inputs.deploy_hf
         env:
