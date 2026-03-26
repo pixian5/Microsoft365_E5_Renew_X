@@ -173,7 +173,7 @@ jobs:
           curl -fsSL -X POST \
             -H "Authorization: Bearer ${HF_TOKEN}" \
             "https://huggingface.co/api/spaces/${HF_SPACE_ID}/restart" \
-            | python -c 'import json,sys; data=json.load(sys.stdin); print(f"Requested HF restart. stage={data.get(\"stage\",\"unknown\")} runtime_sha={data.get(\"sha\",\"unknown\")}")'
+            | python -c 'import json,sys; data=json.load(sys.stdin); print("Requested HF restart. stage=%s runtime_sha=%s" % (data.get("stage", "unknown"), data.get("sha", "unknown")))'
 
       - name: Wait For Hugging Face Runtime Update
         if: github.event_name == 'push' || inputs.deploy_hf
@@ -204,7 +204,7 @@ jobs:
               curl -fsSL -X POST \
                 -H "Authorization: Bearer ${HF_TOKEN}" \
                 "https://huggingface.co/api/spaces/${HF_SPACE_ID}/restart?factory=true" \
-                | python -c 'import json,sys; data=json.load(sys.stdin); print(f"Requested HF factory reboot. stage={data.get(\"stage\",\"unknown\")} runtime_sha={data.get(\"sha\",\"unknown\")}")'
+                | python -c 'import json,sys; data=json.load(sys.stdin); print("Requested HF factory reboot. stage=%s runtime_sha=%s" % (data.get("stage", "unknown"), data.get("sha", "unknown")))'
               repair_attempted=1
             fi
 
