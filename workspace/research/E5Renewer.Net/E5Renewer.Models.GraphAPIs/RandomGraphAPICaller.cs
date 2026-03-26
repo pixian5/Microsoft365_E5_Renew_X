@@ -19,15 +19,29 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
 {
     private static readonly string[] UnsupportedApiPrefixes =
     [
+        "DeviceManagement.VirtualEndpoint.",
+        "Education.",
+        "EmployeeExperience.",
         "FilterOperators.",
+        "IdentityGovernance.EntitlementManagement.",
         "IdentityGovernance.AccessReviews.",
         "IdentityGovernance.TermsOfUse.AgreementAcceptances.",
         "IdentityGovernance.PrivilegedAccess.Group.AssignmentSchedules.",
         "IdentityGovernance.PrivilegedAccess.Group.EligibilitySchedules.",
         "Identity.AuthenticationEventListeners.",
         "Identity.B2xUserFlows.",
+        "IdentityProtection.",
+        "Print.",
         "Reports.ManagedDeviceEnrollment",
+        "Reports.Partners.",
+        "RoleManagement.EntitlementManagement.",
         "Security.SubjectRightsRequests.",
+        "Security.AttackSimulation.",
+        "Security.Identities.",
+        "Security.ThreatIntelligence.",
+        "Solutions.Booking",
+        "Solutions.VirtualEvents.",
+        "TenantRelationships.DelegatedAdmin",
     ];
 
     private static readonly HashSet<string> UnsupportedApiIds =
@@ -172,10 +186,13 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
             || result.Contains("|ChangeTrackingNotSupported", StringComparison.Ordinal)
             || result.Contains("|SearchNotSupported", StringComparison.Ordinal)
             || result.Contains("|ProviderNotSupported", StringComparison.Ordinal)
+            || result.Contains("|MissingLicense", StringComparison.Ordinal)
             || result.Contains("|MalformedResourceIdentifier", StringComparison.Ordinal)
             || result.Contains("|InvalidRequestUrl", StringComparison.Ordinal)
             || result.Contains("|MissingResourcePath", StringComparison.Ordinal)
+            || result.Contains("|PartnerTenantRequired", StringComparison.Ordinal)
             || result.Contains("|RequestPathNotSupported", StringComparison.Ordinal)
+            || result.Contains("|TenantNotOnboarded", StringComparison.Ordinal)
             || result.Contains("|LegacyCpimEndpoint", StringComparison.Ordinal)
             || result.Contains("|LegacySyncfabricEndpoint", StringComparison.Ordinal)
             || result.Contains("|LegacyIdentityGovernanceEndpoint", StringComparison.Ordinal);
