@@ -27,7 +27,7 @@ jobs:
   release:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 70
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -210,7 +210,7 @@ jobs:
           soft_restart_attempted=0
           factory_reboot_attempted=0
           final_factory_reboot_attempted=0
-          deadline=$((SECONDS + 900))
+          deadline=$((SECONDS + 2700))
           attempt=0
 
           fetch_runtime_state() {
@@ -261,19 +261,19 @@ jobs:
               exit 0
             fi
 
-            if [[ "$soft_restart_attempted" -eq 0 && "$SECONDS" -ge 120 ]]; then
+            if [[ "$soft_restart_attempted" -eq 0 && "$SECONDS" -ge 300 ]]; then
               echo "HF runtime is still not serving ${expected_version} after ${SECONDS} seconds. Requesting one regular restart."
               request_space_restart false
               soft_restart_attempted=1
             fi
 
-            if [[ "$factory_reboot_attempted" -eq 0 && "$SECONDS" -ge 240 ]]; then
+            if [[ "$factory_reboot_attempted" -eq 0 && "$SECONDS" -ge 900 ]]; then
               echo "HF runtime is still not serving ${expected_version} after ${SECONDS} seconds. Requesting one factory reboot."
               request_space_restart true
               factory_reboot_attempted=1
             fi
 
-            if [[ "$final_factory_reboot_attempted" -eq 0 && "$SECONDS" -ge 480 ]]; then
+            if [[ "$final_factory_reboot_attempted" -eq 0 && "$SECONDS" -ge 1800 ]]; then
               echo "HF runtime is still not serving ${expected_version} after ${SECONDS} seconds. Requesting one final factory reboot."
               request_space_restart true
               final_factory_reboot_attempted=1
@@ -282,7 +282,7 @@ jobs:
             sleep 5
           done
 
-          echo "HF app health endpoint did not report the requested release version ${expected_version} within 900 seconds." >&2
+          echo "HF app health endpoint did not report the requested release version ${expected_version} within 2700 seconds." >&2
           exit 1
 
       - name: Dump Hugging Face Runtime Logs On Failure
