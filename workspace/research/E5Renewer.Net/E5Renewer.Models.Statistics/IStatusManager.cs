@@ -29,6 +29,9 @@ public interface IStatusManager
     /// <summary>Get summarized success and failure count by user name.</summary>
     public Task<(int SuccessCount, int FailureCount)> GetUserResultSummaryAsync(string name);
 
+    /// <summary>Clear all stored call results.</summary>
+    public Task ClearResultsAsync();
+
     /// <summary>Update result by user name, api id and result string.</summary>
     public Task SetResultAsync(string name, string id, string result);
 }

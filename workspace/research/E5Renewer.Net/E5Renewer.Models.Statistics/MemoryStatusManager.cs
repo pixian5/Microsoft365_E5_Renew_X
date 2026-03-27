@@ -134,6 +134,13 @@ public class MemoryStatusManager : IStatusManager
     }
 
     /// <inheritdoc/>
+    public Task ClearResultsAsync()
+    {
+        this.results.Clear();
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc/>
     public Task SetResultAsync(string name, string id, string result)
     {
         if (this.results.ContainsKey(name))

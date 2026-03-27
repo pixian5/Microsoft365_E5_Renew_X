@@ -19,6 +19,7 @@ public sealed class RuntimeHistoryService : IHostedService, IDisposable
     private readonly ConcurrentQueue<RuntimeHistoryEntry> pendingEntries = new();
     private readonly SemaphoreSlim flushLock = new(1, 1);
     private readonly int capacity;
+    private readonly string logDirectoryPath;
     private readonly string logFilePath;
     private Timer? flushTimer;
     private bool disposed;
@@ -29,6 +30,7 @@ public sealed class RuntimeHistoryService : IHostedService, IDisposable
         string logDirectory = Path.Combine(contentRootPath, "runtime", "history");
         Directory.CreateDirectory(logDirectory);
         TrimOldHistoryFiles(logDirectory);
+        this.logDirectoryPath = logDirectory;
         this.logFilePath = Path.Combine(logDirectory, $"{DateTimeOffset.Now:yyyyMMdd-HHmmss}.log");
     }
 
@@ -126,6 +128,35 @@ public sealed class RuntimeHistoryService : IHostedService, IDisposable
             $"最近 {(int)window.TotalMinutes} 分钟没有任何接口成功或失败记录，后台任务可能未运行。",
             successCount,
             failureCount);
+    }
+
+    public async Task ClearAsync(CancellationToken cancellationToken = default)
+    {
+        await this.flushLock.WaitAsync(cancellationToken);
+        try
+        {
+            while (this.entries.TryDequeue(out _))
+            {
+            }
+
+            while (this.pendingEntries.TryDequeue(out _))
+            {
+            }
+
+            if (!Directory.Exists(this.logDirectoryPath))
+            {
+                return;
+            }
+
+            foreach (string filePath in Directory.EnumerateFiles(this.logDirectoryPath, "*.log", SearchOption.TopDirectoryOnly))
+            {
+                File.Delete(filePath);
+            }
+        }
+        finally
+        {
+            this.flushLock.Release();
+        }
     }
 
     private static bool IsHiddenFromHistory(RuntimeHistoryEntry entry)

@@ -148,6 +148,20 @@ app.MapPost("/dashboard/accounts/stop-all", async (
     });
 });
 
+app.MapPost("/dashboard/runtime/clear", async (
+    RuntimeHistoryService historyService,
+    IStatusManager statusManager,
+    CancellationToken cancellationToken) =>
+{
+    await statusManager.ClearResultsAsync();
+    await historyService.ClearAsync(cancellationToken);
+
+    return Results.Json(new
+    {
+        message = "已清空成功/失败统计和历史日志。"
+    });
+});
+
 app.MapPost("/dashboard/accounts/{name}/stop", async (
     string name,
     HttpContext context,
@@ -627,6 +641,7 @@ static string RenderHome(AppOptions options)
           <h2>账户列表</h2>
           <div class="toolbar-right">
             <button class="secondary" type="button" id="refreshBtn">刷新</button>
+            <button class="ghost" type="button" id="clearRuntimeBtn">清空</button>
             <button class="danger" type="button" id="stopAllBtn">全部停止</button>
             <button class="restart" type="button" id="restartBtn">立即重启服务使配置生效</button>
             <button class="primary" type="button" id="createBtn">新增账户</button>
@@ -840,6 +855,7 @@ static string RenderHome(AppOptions options)
     let shouldCloseSettingsModalFromBackdrop = false;
 
     document.getElementById('refreshBtn').addEventListener('click', () => loadAccounts(true));
+    document.getElementById('clearRuntimeBtn').addEventListener('click', clearRuntimeData);
     document.getElementById('stopAllBtn').addEventListener('click', toggleStopAllAccounts);
     document.getElementById('refreshRuntimeBtn').addEventListener('click', () => loadRuntime(true));
     document.getElementById('refreshHistoryBtn').addEventListener('click', () => loadHistory(true, state.selectedHistoryAccount));
@@ -1266,6 +1282,21 @@ static string RenderHome(AppOptions options)
         showMessage(data.message || '批量切换账户状态完成。', 'success');
       } catch (error) {
         showMessage(error.message || '批量切换账户状态失败', 'error');
+      }
+    }
+
+    async function clearRuntimeData() {
+      try {
+        const response = await fetch('/dashboard/runtime/clear', { method: 'POST' });
+        if (!response.ok) {
+          throw new Error('清空运行数据失败');
+        }
+
+        const data = await response.json();
+        await Promise.all([loadAccounts(false), loadRuntime(false), loadHistory(false, state.selectedHistoryAccount)]);
+        showMessage(data.message || '已清空运行数据。', 'success');
+      } catch (error) {
+        showMessage(error.message || '清空运行数据失败', 'error');
       }
     }
 
