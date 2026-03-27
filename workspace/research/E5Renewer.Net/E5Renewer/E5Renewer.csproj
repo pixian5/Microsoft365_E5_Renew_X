@@ -349,7 +349,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.AuthenticationMethods.UsersRegisteredByMethod\E5Renewer.Models.GraphAPIs.Reports.AuthenticationMethods.UsersRegisteredByMethod.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.AuthenticationMethods\E5Renewer.Models.GraphAPIs.Reports.AuthenticationMethods.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.DailyPrintUsageByPrinter\E5Renewer.Models.GraphAPIs.Reports.DailyPrintUsageByPrinter.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.DailyPrintUsageByUser.Count\E5Renewer.Models.GraphAPIs.Reports.DailyPrintUsageByUser.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.DailyPrintUsageByUser\E5Renewer.Models.GraphAPIs.Reports.DailyPrintUsageByUser.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.DeviceConfigurationDeviceActivity\E5Renewer.Models.GraphAPIs.Reports.DeviceConfigurationDeviceActivity.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.DeviceConfigurationUserActivity\E5Renewer.Models.GraphAPIs.Reports.DeviceConfigurationUserActivity.csproj" />
@@ -358,7 +357,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.GetOffice365ActivationsUserDetail\E5Renewer.Models.GraphAPIs.Reports.GetOffice365ActivationsUserDetail.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.ManagedDeviceEnrollmentFailureDetails\E5Renewer.Models.GraphAPIs.Reports.ManagedDeviceEnrollmentFailureDetails.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.ManagedDeviceEnrollmentTopFailures\E5Renewer.Models.GraphAPIs.Reports.ManagedDeviceEnrollmentTopFailures.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.MonthlyPrintUsageByPrinter\E5Renewer.Models.GraphAPIs.Reports.MonthlyPrintUsageByPrinter.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports.Partners\E5Renewer.Models.GraphAPIs.Reports.Partners.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.Reports\E5Renewer.Models.GraphAPIs.Reports.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.ResourceNamespaces.Count\E5Renewer.Models.GraphAPIs.RoleManagement.Directory.ResourceNamespaces.Count.csproj" />
@@ -385,7 +383,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleDefinitions\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.RoleDefinitions.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement\E5Renewer.Models.GraphAPIs.RoleManagement.EntitlementManagement.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.RoleManagement\E5Renewer.Models.GraphAPIs.RoleManagement.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.SchemaExtensions.Count\E5Renewer.Models.GraphAPIs.SchemaExtensions.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.SchemaExtensions\E5Renewer.Models.GraphAPIs.SchemaExtensions.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.ScopedRoleMemberships.Count\E5Renewer.Models.GraphAPIs.ScopedRoleMemberships.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.ScopedRoleMemberships\E5Renewer.Models.GraphAPIs.ScopedRoleMemberships.csproj" />
