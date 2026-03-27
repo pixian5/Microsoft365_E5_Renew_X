@@ -58,7 +58,6 @@
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsMobileMSI\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsMobileMSI.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsUniversalAppX.Count\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsUniversalAppX.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsUniversalAppX\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsUniversalAppX.csproj" />
-    <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsWebApp\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.GraphWindowsWebApp.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps\E5Renewer.Models.GraphAPIs.DeviceAppManagement.MobileApps.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceAppManagement.TargetedManagedAppConfigurations.Count\E5Renewer.Models.GraphAPIs.DeviceAppManagement.TargetedManagedAppConfigurations.Count.csproj" />
     <ProjectReference Include="..\E5Renewer.Models.GraphAPIs.DeviceAppManagement.TargetedManagedAppConfigurations\E5Renewer.Models.GraphAPIs.DeviceAppManagement.TargetedManagedAppConfigurations.csproj" />
