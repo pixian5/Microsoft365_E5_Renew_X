@@ -387,8 +387,8 @@ curl http://127.0.0.1:51066/healthz
     ],
     "AllowedMaxAgeSeconds": 30,
     "DashboardRefreshSeconds": 5,
-    "GraphApiIntervalMinSeconds": 1,
-    "GraphApiIntervalMaxSeconds": 3,
+    "GraphApiIntervalMinSeconds": 10,
+    "GraphApiIntervalMaxSeconds": 30,
     "UserSecretPath": "Deploy/user-secret.json",
     "TokenFilePath": "Deploy/token.txt"
   }
@@ -413,6 +413,8 @@ curl http://127.0.0.1:51066/healthz
   后端每次调用 Graph 后的最小等待秒数。
 - `Runtime.GraphApiIntervalMaxSeconds`
   后端每次调用 Graph 后的最大等待秒数。
+
+部署到 Hugging Face Space 时，建议不要把这个区间压到很低；如果低于 `10` 秒，程序会自动抬到 `10` 秒以上，避免被平台按异常高频连接拦截。
 - `Runtime.UserSecretPath`
   用户配置文件路径。
 - `Runtime.TokenFilePath`

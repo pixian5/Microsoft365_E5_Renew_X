@@ -1433,8 +1433,8 @@ static ManagedGlobalSettings DeriveSettingsFromUsers(IReadOnlyList<ManagedUserSe
         FromTime = firstUser?.FromTime ?? "00:00:00",
         ToTime = firstUser?.ToTime ?? "23:59:59",
         Days = firstUser?.Days is { Count: > 0 } ? [.. firstUser.Days] : [1, 2, 3, 4, 5],
-        ApiCallIntervalMinSeconds = 1,
-        ApiCallIntervalMaxSeconds = 1,
+        ApiCallIntervalMinSeconds = 10,
+        ApiCallIntervalMaxSeconds = 30,
         FrontendRefreshSeconds = 5
     };
 }

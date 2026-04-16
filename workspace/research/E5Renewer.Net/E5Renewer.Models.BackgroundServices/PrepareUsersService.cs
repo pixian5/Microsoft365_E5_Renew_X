@@ -13,6 +13,9 @@ namespace E5Renewer.Models.BackgroundServices
     /// </summary>
     public class PrepareUsersService : BackgroundService
     {
+        private static readonly TimeSpan MinimumStartupJitter = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan MaximumStartupJitter = TimeSpan.FromSeconds(5);
+
         private readonly ILogger<PrepareUsersService> logger;
         private readonly ISecretProvider secretProvider;
         private readonly IStatusManager statusManager;
@@ -49,6 +52,8 @@ namespace E5Renewer.Models.BackgroundServices
 
         private async Task BlockForUser(User user, CancellationToken token)
         {
+            await this.ApplyStartupJitterAsync(user, token);
+
             while (!token.IsCancellationRequested && user.valid)
             {
                 if (await this.statusManager.IsUserStoppedAsync(user.name))
@@ -80,6 +85,19 @@ namespace E5Renewer.Models.BackgroundServices
                     await Task.Delay(delay, token);
                 }
             }
+        }
+
+        private async Task ApplyStartupJitterAsync(User user, CancellationToken token)
+        {
+            int minMilliseconds = (int)MinimumStartupJitter.TotalMilliseconds;
+            int maxMilliseconds = (int)MaximumStartupJitter.TotalMilliseconds;
+            int jitterMilliseconds = Random.Shared.Next(minMilliseconds, maxMilliseconds + 1);
+            this.logger.LogInformation(
+                "账户 {UserName} 启动前错峰等待 {DelayMilliseconds} 毫秒，避免多个账号同时向 Microsoft Graph 发起首批请求。",
+                user.name,
+                jitterMilliseconds
+            );
+            await Task.Delay(jitterMilliseconds, token);
         }
     }
 }

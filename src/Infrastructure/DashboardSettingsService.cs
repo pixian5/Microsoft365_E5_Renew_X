@@ -7,8 +7,8 @@ namespace Microsoft365_E5_Renew_X.Infrastructure;
 
 public sealed class DashboardSettingsService
 {
-    private const int DefaultApiCallIntervalMinSeconds = 1;
-    private const int DefaultApiCallIntervalMaxSeconds = 1;
+    private const int DefaultApiCallIntervalMinSeconds = 10;
+    private const int DefaultApiCallIntervalMaxSeconds = 30;
     private const int DefaultFrontendRefreshSeconds = 5;
 
     private readonly FileInfo appSettingsFile;

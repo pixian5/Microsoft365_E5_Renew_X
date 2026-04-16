@@ -17,6 +17,8 @@ namespace E5Renewer.Models.GraphAPIs;
 [Module]
 public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
 {
+    private static readonly SemaphoreSlim GlobalGraphCallGate = new(1, 1);
+
     private static readonly string[] UnsupportedApiPrefixes =
     [
         "DeviceManagement.VirtualEndpoint.",
@@ -74,6 +76,7 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
     private readonly IStatusManager statusManager;
     private readonly IUserClientProvider clientProvider;
     private readonly IConfiguration configuration;
+    private int huggingFaceClampLogged;
 
     /// <summary>Initialize <c>RandomGraphAPICaller</c> with parameters given.</summary>
     /// <param name="logger">The logger to generate log.</param>
@@ -127,16 +130,24 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
             return successCount + 1; // let weight greater than zero
         }
 
-        GraphServiceClient client = await this.clientProvider.GetClientForUserAsync(user);
-        IAPIFunction[] availableFunctions = this.apiFunctions.Where((function) => GetFunctionWeightOfCurrentUser(function) > 0).ToArray();
-        if (availableFunctions.Length == 0)
+        await GlobalGraphCallGate.WaitAsync();
+        try
         {
-            availableFunctions = this.apiFunctions;
-        }
+            GraphServiceClient client = await this.clientProvider.GetClientForUserAsync(user);
+            IAPIFunction[] availableFunctions = this.apiFunctions.Where((function) => GetFunctionWeightOfCurrentUser(function) > 0).ToArray();
+            if (availableFunctions.Length == 0)
+            {
+                availableFunctions = this.apiFunctions;
+            }
 
-        IAPIFunction apiFunction = availableFunctions.GetDifferentItemsByWeight(GetFunctionWeightOfCurrentUser, 1).First();
-        APICallResult result = await apiFunction.SafeCallAsync(client, user.name);
-        await this.statusManager.SetResultAsync(user.name, apiFunction.id, result.ToString());
+            IAPIFunction apiFunction = availableFunctions.GetDifferentItemsByWeight(GetFunctionWeightOfCurrentUser, 1).First();
+            APICallResult result = await apiFunction.SafeCallAsync(client, user.name);
+            await this.statusManager.SetResultAsync(user.name, apiFunction.id, result.ToString());
+        }
+        finally
+        {
+            GlobalGraphCallGate.Release();
+        }
     }
 
     /// <inheritdoc/>
@@ -144,20 +155,7 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
     {
         if (user.timeToStart == TimeSpan.Zero)
         {
-            int? legacySeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalSeconds");
-            int minSeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalMinSeconds")
-                ?? legacySeconds
-                ?? 1;
-            int maxSeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalMaxSeconds")
-                ?? legacySeconds
-                ?? minSeconds;
-
-            minSeconds = Math.Clamp(minSeconds, 1, 3600);
-            maxSeconds = Math.Clamp(maxSeconds, 1, 3600);
-            if (maxSeconds < minSeconds)
-            {
-                (minSeconds, maxSeconds) = (maxSeconds, minSeconds);
-            }
+            (int minSeconds, int maxSeconds) = this.GetApiIntervalRange();
 
             int seconds = Random.Shared.Next(minSeconds, maxSeconds + 1);
             int milliseconds = seconds * 1000;
@@ -165,6 +163,49 @@ public class RandomGraphAPICaller : BasicModule, IGraphAPICaller
             await Task.Delay(milliseconds, token);
         }
     }
+
+    private (int MinSeconds, int MaxSeconds) GetApiIntervalRange()
+    {
+        int? legacySeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalSeconds");
+        int minSeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalMinSeconds")
+            ?? legacySeconds
+            ?? 10;
+        int maxSeconds = this.configuration.GetValue<int?>("Runtime:GraphApiIntervalMaxSeconds")
+            ?? legacySeconds
+            ?? minSeconds;
+
+        minSeconds = Math.Clamp(minSeconds, 1, 3600);
+        maxSeconds = Math.Clamp(maxSeconds, 1, 3600);
+        if (maxSeconds < minSeconds)
+        {
+            (minSeconds, maxSeconds) = (maxSeconds, minSeconds);
+        }
+
+        if (IsRunningOnHuggingFace() && minSeconds < 10)
+        {
+            int originalMin = minSeconds;
+            int originalMax = maxSeconds;
+            minSeconds = 10;
+            maxSeconds = Math.Max(maxSeconds, minSeconds);
+
+            if (Interlocked.Exchange(ref this.huggingFaceClampLogged, 1) == 0)
+            {
+                this.logger.LogWarning(
+                    "检测到 Hugging Face Space 运行环境，已把 Graph 请求间隔从 {OriginalMin}-{OriginalMax} 秒提升到 {AdjustedMin}-{AdjustedMax} 秒，避免平台将实例判定为异常高频连接。",
+                    originalMin,
+                    originalMax,
+                    minSeconds,
+                    maxSeconds
+                );
+            }
+        }
+
+        return (minSeconds, maxSeconds);
+    }
+
+    private static bool IsRunningOnHuggingFace() =>
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SPACE_ID")) ||
+        !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("SPACE_HOST"));
 
     private static bool ShouldIncludeApi(IAPIFunction function)
     {
